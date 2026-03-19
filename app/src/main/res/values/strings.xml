@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name" translatable="false">Trip Money</string>
+    <string name="note">Note</string>
+    <string name="category">Category</string>
+    <string name="save">Save</string>
+    <string name="backspace">Backspace</string>
+    <string name="pick_category">Pick a category</string>
+    <string name="add_new_category">Add new</string>
+    <string name="pick_currency">Pick a currency</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_expense">Add expense</string>
+    <string name="delete">Delete</string>
+    <string name="delete_confirmation">Do you want to delete?</string>
+    <string name="theme">Theme</string>
+    <string name="dark_theme">Dark theme</string>
+    <string name="light_theme">Light theme</string>
+    <string name="pick_theme">Pick a theme</string>
+    <string name="system_settings">System settings</string>
+<!--    <string name="theme">Theme</string>-->
+</resources>

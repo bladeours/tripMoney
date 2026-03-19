@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="note">notatki</string>
+    <string name="category">Kategoria</string>
+    <string name="save">Zapisz</string>
+    <string name="backspace">Usuń</string>
+    <string name="pick_category">Wybierz kategorie</string>
+    <string name="add_new_category">dodaj nową</string>
+    <string name="pick_currency">Wybierz kategorie</string>
+    <string name="cancel">Anuluj</string>
+    <string name="add_expense">Dodaj wydatek</string>
+    <string name="delete">Usuń</string>
+    <string name="delete_confirmation">Na pewno chcesz usunąć?</string>
+    <string name="light_theme">Jasny motyw</string>
+    <string name="pick_theme">Wybierz motyw</string>
+    <string name="system_settings">Zgodnie z systemem</string>
+    <string name="theme">Motyw</string>
+    <string name="dark_theme">Ciemny motyw</string>
+</resources>

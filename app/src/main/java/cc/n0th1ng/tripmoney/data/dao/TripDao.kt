@@ -1,0 +1,22 @@
+package cc.n0th1ng.tripmoney.data.dao
+
+import androidx.paging.PagingSource
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Upsert
+import cc.n0th1ng.tripmoney.data.entity.Trip
+
+@Dao
+interface TripDao {
+    @Upsert
+    suspend fun insert(trip: Trip)
+
+    @Query(
+        """
+        SELECT * FROM trip
+    """
+    )
+    fun tripsPaged(): PagingSource<Int, Trip>
+
+}
