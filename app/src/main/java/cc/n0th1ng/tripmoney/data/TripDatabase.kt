@@ -33,6 +33,7 @@ abstract class TripDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
 }
 
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
