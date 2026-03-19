@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.R
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
@@ -46,9 +47,11 @@ import cc.n0th1ng.tripmoney.screens.listexpense.CategorySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.DateTimePicker
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,11 +60,10 @@ import java.time.LocalDateTime
 fun AddExpenseBottomSheet(
     onSave: (Expense) -> Unit,
     onDismiss: () -> Unit,
-    settingsViewModel: SettingsViewModel,
     categories: List<Category>,
-    expenseAndCategoryViewModel: ExpenseAndCategoryViewModel,
     expenseDtoToEdit: ExpenseDto?
 ) {
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
     var amount by remember {
         mutableStateOf(
@@ -70,11 +72,18 @@ fun AddExpenseBottomSheet(
     }
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showCategoryDialog by remember { mutableStateOf(false) }
-    var currency by remember { mutableStateOf(expenseDtoToEdit?.expense?.currency ?: "PLN") }
+    var showDateTimePicker by remember { mutableStateOf(false) }
+    var currency by remember {
+        mutableStateOf(
+            expenseDtoToEdit?.expense?.currency ?: Currencies.PLN.name
+        )
+    }
     var category by remember { mutableStateOf(expenseDtoToEdit?.category ?: categories[0]) }
     var datetime by remember {
         mutableStateOf(
-            LocalDateTime.parse(expenseDtoToEdit?.expense?.datetime ?: LocalDateTime.now().toString())
+            LocalDateTime.parse(
+                expenseDtoToEdit?.expense?.datetime ?: LocalDateTime.now().toString()
+            )
         )
     }
     var note by remember { mutableStateOf(expenseDtoToEdit?.expense?.note ?: "") }
@@ -103,10 +112,12 @@ fun AddExpenseBottomSheet(
                 CurrencyButton(onClick = { showCurrencyDialog = true }, text = currency)
             }
             Spacer(Modifier.height(14.dp))
-            DateTimePicker(
-                dateTime = datetime,
-                onChange = { datetime = it }
-            )
+            OutlinedButton(onClick = { showDateTimePicker = true }) {
+                Text(
+                    text = datetime.format(DateTimeFormatter.ofPattern("dd.MM HH:mm")),
+                    fontSize = 17.sp
+                )
+            }
             Spacer(Modifier.height(14.dp))
             CategoryButton(onClick = { showCategoryDialog = true }, category = category)
             Spacer(Modifier.height(14.dp))
@@ -155,7 +166,12 @@ fun AddExpenseBottomSheet(
         }
     }
 
-
+    if (showDateTimePicker) {
+        DateTimePicker(datetime, onChange = { newDateTime ->
+            datetime = newDateTime
+            showDateTimePicker = false
+        })
+    }
 
     if (showCurrencyDialog) {
         CurrencySelectionDialog(
@@ -164,8 +180,7 @@ fun AddExpenseBottomSheet(
                 showCurrencyDialog = false
                 currency = selectedCurrency
             },
-            selected = currency,
-            listOfCurrencies = listOf("PLN", "EUR", "USD")
+            selected = currency
         )
     }
 
@@ -177,8 +192,7 @@ fun AddExpenseBottomSheet(
                 category = selectedCategory
             },
             selected = category,
-            categories = categories,
-            settingsAndCategoryViewModel = expenseAndCategoryViewModel
+            categories = categories
         )
     }
 }

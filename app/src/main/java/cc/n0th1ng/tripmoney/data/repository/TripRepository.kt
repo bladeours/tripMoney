@@ -22,4 +22,9 @@ class TripRepository @Inject constructor(private val tripDao: TripDao) {
             pagingSourceFactory = { tripDao.tripsPaged() }
         ).flow
     }
+
+    @WorkerThread
+    suspend fun delete(trip: Trip) {
+        tripDao.delete(trip)
+    }
 }

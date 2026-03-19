@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.R.*
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.screens.AddCategoryDialog
@@ -36,9 +37,9 @@ fun CategorySelectionDialog(
     onDismiss: () -> Unit,
     onCategorySelected: (Category) -> Unit,
     selected: Category,
-    categories: List<Category>,
-    settingsAndCategoryViewModel: ExpenseAndCategoryViewModel
+    categories: List<Category>
 ) {
+    val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val listState = rememberLazyListState()
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     AlertDialog(
@@ -99,7 +100,7 @@ fun CategorySelectionDialog(
         AddCategoryDialog(onDismiss = {
             showAddCategoryDialog = false
         }, onSave = { category ->
-            settingsAndCategoryViewModel.save(category)
+            expenseAndCategoryViewModel.save(category)
             showAddCategoryDialog = false
         })
     }

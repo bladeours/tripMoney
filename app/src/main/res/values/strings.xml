@@ -16,5 +16,6 @@
     <string name="light_theme">Light theme</string>
     <string name="pick_theme">Pick a theme</string>
     <string name="system_settings">System settings</string>
-<!--    <string name="theme">Theme</string>-->
+    <string name="add_trip">Add Trip</string>
+    <string name="name">Name</string>
 </resources>

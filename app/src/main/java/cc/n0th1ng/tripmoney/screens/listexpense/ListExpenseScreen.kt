@@ -2,7 +2,6 @@ package cc.n0th1ng.tripmoney.screens.listexpense
 
 import android.annotation.SuppressLint
 import android.os.Build
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,7 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import cc.n0th1ng.tripmoney.R.*
+import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.screens.addexpense.AddExpenseBottomSheet
@@ -61,7 +60,6 @@ import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.getValue
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,9 +143,7 @@ fun ListExpenseScreen() {
                     expenseDtoToEdit = null
                     showBottomSheet = false
                 },
-                settingsViewModel = settingsViewModel,
                 categories = categories,
-                expenseAndCategoryViewModel = expenseAndCategoryViewModel,
                 expenseDtoToEdit = expenseDtoToEdit
             )
         }
@@ -287,8 +283,8 @@ fun ExpenseCard(expenseDto: ExpenseDto, onClick: (ExpenseDto) -> Unit) {
                         .fillMaxHeight()
                         .padding(vertical = 8.dp)
                 ) {
-                    Column(
-                    ) {
+                    Column()
+                    {
                         Text(
                             text = expenseDto.category.name,
                             fontWeight = FontWeight.Bold,

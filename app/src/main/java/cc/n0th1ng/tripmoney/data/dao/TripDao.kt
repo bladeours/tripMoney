@@ -2,6 +2,7 @@ package cc.n0th1ng.tripmoney.data.dao
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
@@ -19,4 +20,6 @@ interface TripDao {
     )
     fun tripsPaged(): PagingSource<Int, Trip>
 
+    @Delete
+    suspend fun delete(trip: Trip)
 }
