@@ -31,37 +31,29 @@ abstract class TripDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun expenseDao(): ExpenseDao
     abstract fun categoryDao(): CategoryDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: TripDatabase? = null
-
-        fun getInstance(context: Context): TripDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: Room.inMemoryDatabaseBuilder(
-                    context,
-                    TripDatabase::class.java
-                ).allowMainThreadQueries().build().also { INSTANCE = it }
-            }
-        }
-    }
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
     fun provideTripDatabase(
         @ApplicationContext context: Context
     ): TripDatabase {
-        return Room.inMemoryDatabaseBuilder(
-            context,
-            TripDatabase::class.java
-        )
-            .allowMainThreadQueries() // Only for in-memory DB, not for production!
-            .build()
+
+        val db: TripDatabase = Room.inMemoryDatabaseBuilder(
+            context, TripDatabase::class.java
+        ).allowMainThreadQueries().build()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            DatabasePrepopulator(
+                tripDao = db.tripDao(), categoryDao = db.categoryDao(), expenseDao = db.expenseDao()
+            ).prepopulate()
+        }
+        return db
     }
 
     @Provides
@@ -81,20 +73,10 @@ object DatabaseModule {
     fun provideCategoryDao(database: TripDatabase): CategoryDao {
         return database.categoryDao()
     }
-
-    @Provides
-    @Singleton
-    fun provideDatabasePrepopulator(
-        tripDao: TripDao,
-        categoryDao: CategoryDao,
-        expenseDao: ExpenseDao
-    ): DatabasePrepopulator {
-        return DatabasePrepopulator(tripDao, categoryDao, expenseDao)
-    }
 }
 
 
-class DatabasePrepopulator @Inject constructor(
+private class DatabasePrepopulator(
     private val tripDao: TripDao,
     private val categoryDao: CategoryDao,
     private val expenseDao: ExpenseDao
@@ -119,20 +101,155 @@ class DatabasePrepopulator @Inject constructor(
         categoryDao.insert(Category(name = "Zakupy8", icon = Icons.GROCERIES, color = "#CFD8DC"))
 
         val now = LocalDateTime.now()
-        expenseDao.insert(Expense(amount = 120.50, currency = "PLN", note = "Hotel overnight", datetime = now.minusDays(10).toString(), categoryId = 1, tripId = 1))
-        expenseDao.insert(Expense(amount = 45.75, currency = "PLN", note = "Dinner", datetime = now.minusDays(9).toString(), categoryId = 2, tripId = 1))
-        expenseDao.insert(Expense(amount = 15.20, currency = "PLN", note = "Bus ticket", datetime = now.minusDays(8).toString(), categoryId = 3, tripId = 1))
-        expenseDao.insert(Expense(amount = 89.99, currency = "PLN", note = "Concert tickets", datetime = now.minusDays(7).toString(), categoryId = 4, tripId = 1))
-        expenseDao.insert(Expense(amount = 32.50, currency = "PLN", note = "Souvenirs", datetime = now.minusDays(6).toString(), categoryId = 5, tripId = 1))
-        expenseDao.insert(Expense(amount = 180.00, currency = "PLN", note = "Hotel 3 nights", datetime = now.minusDays(5).toString(), categoryId = 1, tripId = 1))
-        expenseDao.insert(Expense(amount = 67.30, currency = "PLN", note = "Lunch", datetime = now.minusDays(4).toString(), categoryId = 2, tripId = 1))
-        expenseDao.insert(Expense(amount = 22.00, currency = "PLN", note = "Train ticket", datetime = now.minusDays(3).toString(), categoryId = 3, tripId = 1))
-        expenseDao.insert(Expense(amount = 55.00, currency = "PLN", note = "Museum entry", datetime = now.minusDays(2).toString(), categoryId = 4, tripId = 1))
-        expenseDao.insert(Expense(amount = 12.99, currency = "PLN", note = "Snacks", datetime = now.minusDays(1).toString(), categoryId = 2, tripId = 1))
-        expenseDao.insert(Expense(amount = 210.00, currency = "PLN", note = "Hotel 5 nights", datetime = now.toString(), categoryId = 1, tripId = 1))
-        expenseDao.insert(Expense(amount = 95.50, currency = "EUR", note = "Dinner for two", datetime = now.minusHours(12).toString(), categoryId = 2, tripId = 1))
-        expenseDao.insert(Expense(amount = 30.00, currency = "EUR", note = "Taxi", datetime = now.minusHours(6).toString(), categoryId = 3, tripId = 1))
-        expenseDao.insert(Expense(amount = 40.00, currency = "USD", note = "Gifts", datetime = now.minusHours(3).toString(), categoryId = 5, tripId = 1))
-        expenseDao.insert(Expense(amount = 75.00, currency = "PLN", note = "Sightseeing tour", datetime = now.minusHours(1).toString(), categoryId = 4, tripId = 1))
+        expenseDao.insert(
+            Expense(
+                amount = 120.50,
+                currency = "PLN",
+                note = "Hotel overnight",
+                datetime = now.minusDays(10).toString(),
+                categoryId = 1,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 45.75,
+                currency = "PLN",
+                note = "Dinner",
+                datetime = now.minusDays(9).toString(),
+                categoryId = 2,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 15.20,
+                currency = "PLN",
+                note = "Bus ticket",
+                datetime = now.minusDays(8).toString(),
+                categoryId = 3,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 89.99,
+                currency = "PLN",
+                note = "Concert tickets",
+                datetime = now.minusDays(7).toString(),
+                categoryId = 4,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 32.50,
+                currency = "PLN",
+                note = "Souvenirs",
+                datetime = now.minusDays(6).toString(),
+                categoryId = 5,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 180.00,
+                currency = "PLN",
+                note = "Hotel 3 nights",
+                datetime = now.minusDays(5).toString(),
+                categoryId = 1,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 67.30,
+                currency = "PLN",
+                note = "Lunch",
+                datetime = now.minusDays(4).toString(),
+                categoryId = 2,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 22.00,
+                currency = "PLN",
+                note = "Train ticket",
+                datetime = now.minusDays(3).toString(),
+                categoryId = 3,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 55.00,
+                currency = "PLN",
+                note = "Museum entry",
+                datetime = now.minusDays(2).toString(),
+                categoryId = 4,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 12.99,
+                currency = "PLN",
+                note = "Snacks",
+                datetime = now.minusDays(1).toString(),
+                categoryId = 2,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 210.00,
+                currency = "PLN",
+                note = "Hotel 5 nights",
+                datetime = now.toString(),
+                categoryId = 1,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 95.50,
+                currency = "EUR",
+                note = "Dinner for two",
+                datetime = now.minusHours(12).toString(),
+                categoryId = 2,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 30.00,
+                currency = "EUR",
+                note = "Taxi",
+                datetime = now.minusHours(6).toString(),
+                categoryId = 3,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 40.00,
+                currency = "USD",
+                note = "Gifts",
+                datetime = now.minusHours(3).toString(),
+                categoryId = 5,
+                tripId = 1
+            )
+        )
+        expenseDao.insert(
+            Expense(
+                amount = 75.00,
+                currency = "PLN",
+                note = "Sightseeing tour",
+                datetime = now.minusHours(1).toString(),
+                categoryId = 4,
+                tripId = 1
+            )
+        )
     }
 }

@@ -18,7 +18,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import cc.n0th1ng.tripmoney.data.DatabasePrepopulator
 import cc.n0th1ng.tripmoney.navigation.BottomNavigation
 import cc.n0th1ng.tripmoney.navigation.CustomNavigationDrawer
 import cc.n0th1ng.tripmoney.navigation.Screens
@@ -30,22 +29,14 @@ import cc.n0th1ng.tripmoney.screens.statistics.StatisticsScreen
 import cc.n0th1ng.tripmoney.screens.trippicker.TripPickerScreen
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject
-    lateinit var databasePrePopulate: DatabasePrepopulator
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        CoroutineScope(Dispatchers.IO).launch {
-            databasePrePopulate.prepopulate()
-        }
         enableEdgeToEdge()
         setContent {
             TripMoneyTheme {
