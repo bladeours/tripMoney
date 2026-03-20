@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -28,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,6 +61,7 @@ import cc.n0th1ng.tripmoney.screens.listexpense.DeleteConfirmationDialog
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -67,6 +73,7 @@ fun TripPickerScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     val trips: LazyPagingItems<Trip> = tripViewModel.getTrips().collectAsLazyPagingItems()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
+    var tripToEdit by remember { mutableStateOf<Trip?>(null) }
     Scaffold(floatingActionButtonPosition = FabPosition.EndOverlay, floatingActionButton = {
         FloatingActionButton(
             onClick = { showBottomSheet = true }) {
@@ -83,12 +90,17 @@ fun TripPickerScreen(
                 Spacer(Modifier.height(10.dp))
                 val trip = trips[i]
                 if (trip != null) {
-                    SwipeToDeleteTripCard(trip, onDelete = {
+                    SwipeToDeleteTripCard(
+                        trip, onDelete = {
                         tripViewModel.delete(trip)
                     }, onClick = {
                         settingsViewModel.setCurrentTrip(trip.id)
                         navController.navigate(Screens.LIST_EXPENSE)
-                    }, isSelected = currentTripId == trip.id)
+                    }, isSelected = currentTripId == trip.id,
+                        onLongClick = { trip ->
+                            tripToEdit = trip
+                            showBottomSheet = true
+                        })
                 }
                 Spacer(Modifier.height(10.dp))
             }
@@ -98,12 +110,15 @@ fun TripPickerScreen(
             AddTripBottomSheet(
                 onDismiss = {
                     showBottomSheet = false
+                    tripToEdit = null
                 },
                 onSave = { trip ->
                     tripViewModel.save(trip)
                     showBottomSheet = false
+                    tripToEdit = null
                 },
-                null
+                tripToEdit = tripToEdit,
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
             )
         }
     }
@@ -112,7 +127,8 @@ fun TripPickerScreen(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SwipeToDeleteTripCard(
-    trip: Trip, onDelete: (Trip) -> Unit, onClick: (Trip) -> Unit, isSelected: Boolean
+    trip: Trip, onDelete: (Trip) -> Unit, onClick: (Trip) -> Unit, isSelected: Boolean,
+    onLongClick: (Trip) -> Unit
 ) {
     var dismissed by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
@@ -151,18 +167,27 @@ fun SwipeToDeleteTripCard(
                     Icon(Icons.Default.Delete, contentDescription = stringResource(string.delete))
                 }
             }) {
-            TripCard(trip, isSelected, onClick = onClick)
+            TripCard(trip, isSelected, onClick = onClick, onLongClick = onLongClick)
         }
     }
 }
 
 
 @Composable
-fun TripCard(trip: Trip, isSelected: Boolean, onClick: (Trip) -> Unit) {
+fun TripCard(
+    trip: Trip,
+    isSelected: Boolean,
+    onClick: (Trip) -> Unit,
+    onLongClick: (Trip) -> Unit
+) {
+    val haptics = LocalHapticFeedback.current
     ElevatedCard(
         modifier = Modifier
             .height(100.dp)
-            .clickable(true, onClick = { onClick(trip) }),
+            .combinedClickable(enabled = true, onLongClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onLongClick(trip)
+            }, onClick = { onClick(trip) }),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 7.dp else 0.dp)
     ) {
         Row(

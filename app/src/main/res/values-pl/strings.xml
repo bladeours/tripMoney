@@ -16,6 +16,8 @@
     <string name="system_settings">Zgodnie z systemem</string>
     <string name="theme">Motyw</string>
     <string name="dark_theme">Ciemny motyw</string>
-    <string name="add_trip">Dodaj Wycieczkę</string>
+    <string name="add_trip">Dodaj wycieczkę</string>
     <string name="name">Nazwa</string>
+    <string name="edit_trip">Edytuj wycieczkę</string>
+    <string name="edit_expense">Edytuj wydatek</string>
 </resources>

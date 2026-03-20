@@ -11,9 +11,11 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -28,6 +30,7 @@ import cc.n0th1ng.tripmoney.screens.settings.SettingsScreen
 import cc.n0th1ng.tripmoney.screens.statistics.StatisticsScreen
 import cc.n0th1ng.tripmoney.screens.trippicker.TripPickerScreen
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -49,6 +52,8 @@ class MainActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationDrawer() {
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val currentTripId by settingsViewModel.currentTrip.collectAsState()
     val navController = rememberNavController()
     val navBackStack by navController.currentBackStackEntryAsState()
     val current = navBackStack?.destination?.route
@@ -74,7 +79,7 @@ fun NavigationDrawer() {
             bottomBar = { BottomNavigation(navController) }) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = Screens.TRIP_PICKER,
+                startDestination = if(currentTripId == -1) Screens.TRIP_PICKER else Screens.LIST_EXPENSE,
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Screens.LIST_EXPENSE) {

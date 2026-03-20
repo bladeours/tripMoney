@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -56,10 +58,14 @@ import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.screens.addexpense.AddExpenseBottomSheet
+import cc.n0th1ng.tripmoney.service.ExchangeService
+import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,8 +77,6 @@ fun ListExpenseScreen() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
 
     val currentTrip by settingsViewModel.currentTrip.collectAsState()
-    val categories by expenseAndCategoryViewModel.getCategories()
-        .collectAsState(initial = emptyList())
     val expenses = expenseAndCategoryViewModel.getExpenses(currentTrip).collectAsLazyPagingItems()
     val listState = rememberLazyListState()
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -98,27 +102,13 @@ fun ListExpenseScreen() {
                 val expenseDto = expenses[index]
                 if (expenseDto != null) {
                     val previousExpense = expenses.itemSnapshotList.items.getOrNull(index - 1)
-
                     val showDayDivider =
                         index == 0 || LocalDateTime.parse(previousExpense?.expense?.datetime)
                             .toLocalDate() != LocalDateTime.parse(expenseDto.expense.datetime)
                             .toLocalDate()
                     Spacer(Modifier.height(5.dp))
                     if (showDayDivider) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Absolute.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                            Text(
-                                LocalDateTime.parse(expenseDto.expense.datetime).format(
-                                    DateTimeFormatter.ofPattern("dd EEEE")
-                                ).toString(),
-                                modifier = Modifier.background(Color.White.copy(alpha = 0f))
-                            )
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                        }
+                        CustomDivider(expenseDto)
                     }
                     Spacer(Modifier.height(5.dp))
                     SwipeToDeleteExpenseCard(
@@ -143,10 +133,29 @@ fun ListExpenseScreen() {
                     expenseDtoToEdit = null
                     showBottomSheet = false
                 },
-                categories = categories,
-                expenseDtoToEdit = expenseDtoToEdit
+                expenseDtoToEdit = expenseDtoToEdit,
+                state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
             )
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun CustomDivider(expenseDto: ExpenseDto) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Absolute.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HorizontalDivider(modifier = Modifier.weight(1f))
+        Text(
+            LocalDateTime.parse(expenseDto.expense.datetime).format(
+                DateTimeFormatter.ofPattern("dd EEEE")
+            ).toString(),
+            modifier = Modifier.background(Color.White.copy(alpha = 0f))
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f))
     }
 }
 
@@ -257,7 +266,10 @@ fun ExpenseCard(expenseDto: ExpenseDto, onClick: (ExpenseDto) -> Unit) {
         modifier = Modifier
             .fillMaxWidth(0.9f)
             .height(70.dp)
-            .clickable { onClick(expenseDto) },
+            .combinedClickable(
+                enabled = true,
+                onClick = { onClick(expenseDto) },
+                onLongClick = { onClick(expenseDto) }),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
         Row(
@@ -312,8 +324,16 @@ fun ExpenseCard(expenseDto: ExpenseDto, onClick: (ExpenseDto) -> Unit) {
                     fontWeight = FontWeight.Bold
                 )
                 if (expenseDto.expense.currency.lowercase() != expenseDto.trip.currency.lowercase()) {
+                    val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
+                    val amount by
+                    expenseAndCategoryViewModel.convertAmount(
+                        amount = expenseDto.expense.amount,
+                        base = Currencies.valueOf(expenseDto.expense.currency),
+                        target = Currencies.valueOf(expenseDto.trip.currency),
+                        date = LocalDateTime.parse(expenseDto.expense.datetime).toLocalDate()
+                    ).collectAsState(initial = 0.0)
                     Text(
-                        text = "≈ %.2f ${expenseDto.trip.currency}".format(expenseDto.expense.amount),
+                        text = "≈ %.2f ${expenseDto.trip.currency}".format(amount),
                         fontSize = 12.sp
                     )
                 }

@@ -18,4 +18,6 @@
     <string name="system_settings">System settings</string>
     <string name="add_trip">Add Trip</string>
     <string name="name">Name</string>
+    <string name="edit_trip">Edit trip</string>
+    <string name="edit_expense">Edit expense</string>
 </resources>

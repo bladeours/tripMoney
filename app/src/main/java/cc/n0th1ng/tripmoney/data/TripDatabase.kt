@@ -8,9 +8,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cc.n0th1ng.tripmoney.data.dao.CategoryDao
+import cc.n0th1ng.tripmoney.data.dao.ExchangeRateDao
 import cc.n0th1ng.tripmoney.data.dao.ExpenseDao
 import cc.n0th1ng.tripmoney.data.dao.TripDao
 import cc.n0th1ng.tripmoney.data.entity.Category
+import cc.n0th1ng.tripmoney.data.entity.ExchangeRate
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.utils.Icons
@@ -26,11 +28,12 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Database(entities = [Trip::class, Expense::class, Category::class], version = 1)
+@Database(entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class], version = 1)
 abstract class TripDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun expenseDao(): ExpenseDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun exchangeRateDao(): ExchangeRateDao
 }
 
 
@@ -73,6 +76,12 @@ object DatabaseModule {
     @Singleton
     fun provideCategoryDao(database: TripDatabase): CategoryDao {
         return database.categoryDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideExchangeRateDao(database: TripDatabase): ExchangeRateDao {
+        return database.exchangeRateDao()
     }
 }
 
