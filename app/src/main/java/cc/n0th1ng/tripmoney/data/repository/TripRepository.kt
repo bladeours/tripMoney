@@ -23,6 +23,10 @@ class TripRepository @Inject constructor(private val tripDao: TripDao) {
         ).flow
     }
 
+    fun getTrip(tripId: Int): Trip? {
+        return tripDao.trip(tripId)
+    }
+
     @WorkerThread
     suspend fun delete(trip: Trip) {
         tripDao.delete(trip)

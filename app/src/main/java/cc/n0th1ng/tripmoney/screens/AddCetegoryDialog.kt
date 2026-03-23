@@ -1,6 +1,5 @@
 package cc.n0th1ng.tripmoney.screens
 
-import android.graphics.drawable.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -28,19 +27,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import cc.n0th1ng.tripmoney.data.entity.Category
-import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
-import cc.n0th1ng.tripmoney.utils.Colors
 import cc.n0th1ng.tripmoney.utils.Icons
+import cc.n0th1ng.tripmoney.utils.colors
 
 @Composable
 fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (Category) -> Unit) {
     var name by remember { mutableStateOf("") }
     var icon by remember { mutableStateOf(Icons.entries[0]) }
-    var color by remember { mutableStateOf(Colors.entries[0].hexString) }
+    var color by remember { mutableStateOf(colors[0]) }
     AlertDialog(
         onDismissRequest = onDismiss, title = { Text("Add new category") }, text = {
             AlertDialogFill(
@@ -48,7 +45,7 @@ fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (Category) -> Unit) {
                     name = newText
                 },
                 onIconChange = { newIcon -> icon = newIcon },
-                onColorChange = {newColor -> color = newColor}
+                onColorChange = { newColor -> color = newColor }
             )
         }, confirmButton = {
             Button(
@@ -72,10 +69,14 @@ fun AddCategoryDialog(onDismiss: () -> Unit, onSave: (Category) -> Unit) {
 }
 
 @Composable
-fun AlertDialogFill(onTextChange: (String) -> Unit, onIconChange: (Icons) -> Unit, onColorChange: (String) -> Unit) {
+fun AlertDialogFill(
+    onTextChange: (String) -> Unit,
+    onIconChange: (Icons) -> Unit,
+    onColorChange: (String) -> Unit
+) {
     var text by remember { mutableStateOf("") }
     var iconId by remember { mutableIntStateOf(Icons.entries[0].resource) }
-    var colorHex by remember { mutableStateOf(Colors.entries[0].hexString) }
+    var colorHex by remember { mutableStateOf(colors[0]) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -118,16 +119,16 @@ fun AlertDialogFill(onTextChange: (String) -> Unit, onIconChange: (Icons) -> Uni
                 rememberScrollState()
             )
         ) {
-            Colors.entries.forEach { color ->
+            colors.forEach { color ->
                 Box(
                     modifier = Modifier
                         .clickable(onClick = {
-                            colorHex = color.hexString
+                            colorHex = color
                             onColorChange(colorHex)
                         })
                         .size(30.dp)
                         .aspectRatio(1f)
-                        .background(Color(color.hexString.toColorInt()))
+                        .background(Color(color.toColorInt()))
                 ) {}
             }
         }

@@ -24,6 +24,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,12 +38,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.R
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.screens.addexpense.CurrencyButton
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.DatePicker
 import cc.n0th1ng.tripmoney.utils.Currencies
+import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import io.ktor.http.hostIsIp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -62,9 +66,11 @@ fun AddTripBottomSheet(
             LocalDate.parse(tripToEdit?.startDate ?: LocalDate.now().toString())
         )
     }
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val defaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var currency by remember { mutableStateOf(tripToEdit?.currency ?: Currencies.default().name) }
+    var currency by remember { mutableStateOf(tripToEdit?.currency ?: defaultCurrency.name) }
     var enableSave by remember { mutableStateOf(tripToEdit != null) }
 
     ModalBottomSheet(

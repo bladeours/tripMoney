@@ -104,7 +104,9 @@ fun DateTimePicker(
 
     if (showDatePicker) {
         DatePicker(onDismiss = { showDatePicker = false }, onConfirm = { newDate ->
-                date = newDate
+            date = newDate
+            showDatePicker = false
+            showTimePicker = true
         })
     }
 

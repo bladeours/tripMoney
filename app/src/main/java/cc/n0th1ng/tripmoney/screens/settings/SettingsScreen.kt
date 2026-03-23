@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.R.*
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
+import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
+import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -40,8 +42,9 @@ import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 fun SettingsScreen() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTheme by settingsViewModel.theme.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    val currentDefaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
+    var showThemeDialog by remember { mutableStateOf(false) }
+    var showCurrencyDialog by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -49,7 +52,7 @@ fun SettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Card {
-            SettingsListItem(onClick = { showDialog = true }, stringResource(string.theme)) {
+            SettingsListItem(onClick = { showThemeDialog = true }, stringResource(string.theme)) {
                 Text(
                     if (isSystemInDarkTheme()) stringResource(string.dark_theme) else stringResource(
                         string.light_theme
@@ -58,15 +61,32 @@ fun SettingsScreen() {
             }
         }
 
-        if (showDialog) {
+        Card {
+            SettingsListItem(
+                onClick = { showCurrencyDialog = true },
+                stringResource(string.default_currency)
+            ) {
+                 Text(currentDefaultCurrency.name)
+            }
+        }
+
+        if (showThemeDialog) {
             ThemeSelectionDialog(
-                onDismiss = { showDialog = false },
+                onDismiss = { showThemeDialog = false },
                 onThemeSelected = { theme ->
                     settingsViewModel.setTheme(theme)
-                    showDialog = false
+                    showThemeDialog = false
                 },
                 selected = currentTheme
             )
+        }
+
+        if (showCurrencyDialog) {
+            CurrencySelectionDialog(onDismiss = {showCurrencyDialog = false}, onCurrencySelected = {
+                currencyString ->
+                settingsViewModel.setDefaultCurrency(Currencies.valueOf(currencyString))
+                showCurrencyDialog = false
+            }, currentDefaultCurrency.name)
         }
     }
 }

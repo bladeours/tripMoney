@@ -66,6 +66,7 @@ import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -81,13 +82,13 @@ fun AddExpenseBottomSheet(
     onSave: (Expense) -> Unit,
     onDismiss: () -> Unit,
     expenseDtoToEdit: ExpenseDto?,
-    state: SheetState,
-//    categories: List<Category> = emptyList()
+    state: SheetState
 ) {
+    val tripViewModel: TripViewModel = hiltViewModel()
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
-//    val currentTripId = 1
+    val currentTrip = tripViewModel.getTrip(currentTripId)
     val categories by expenseAndCategoryViewModel.getCategories().collectAsState(emptyList())
     if (categories.isEmpty()) {
         return
@@ -103,7 +104,7 @@ fun AddExpenseBottomSheet(
     var showDateTimePicker by remember { mutableStateOf(false) }
     var currency by remember {
         mutableStateOf(
-            expenseDtoToEdit?.expense?.currency ?: Currencies.PLN.name
+            expenseDtoToEdit?.expense?.currency ?: currentTrip?.currency ?: Currencies.default().name
         )
     }
     var category by remember { mutableStateOf(expenseDtoToEdit?.category ?: categories[0]) }

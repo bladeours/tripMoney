@@ -30,7 +30,9 @@ import cc.n0th1ng.tripmoney.screens.settings.SettingsScreen
 import cc.n0th1ng.tripmoney.screens.statistics.StatisticsScreen
 import cc.n0th1ng.tripmoney.screens.trippicker.TripPickerScreen
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -43,6 +45,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TripMoneyTheme {
+                val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
+                expenseAndCategoryViewModel.clearOldRates()
                 NavigationDrawer()
             }
         }
@@ -53,7 +57,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NavigationDrawer() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val tripViewModel: TripViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
+    val currentTrip = tripViewModel.getTrip(currentTripId)
     val navController = rememberNavController()
     val navBackStack by navController.currentBackStackEntryAsState()
     val current = navBackStack?.destination?.route
@@ -65,7 +71,9 @@ fun NavigationDrawer() {
             topBar = {
                 if (current == Screens.SETTINGS) TopBarSettings(
                     navController
-                ) else TopBar(onClick = {
+                ) else TopBar(
+                    title = currentTrip?.name ?: "",
+                    onClick = {
                     scope.launch {
                         if (drawerState.isClosed) {
                             drawerState.open()

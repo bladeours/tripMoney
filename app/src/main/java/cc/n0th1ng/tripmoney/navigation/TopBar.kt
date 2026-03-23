@@ -14,9 +14,9 @@ import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(onClick: () -> Unit) {
+fun TopBar(onClick: () -> Unit, title: String = "") {
     TopAppBar(
-        title = {},
+        title = { Text(title) },
         navigationIcon = {
             IconButton(onClick = { onClick() }) {
                 Icon(Icons.Default.Menu, contentDescription = "Menu")

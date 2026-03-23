@@ -16,6 +16,7 @@ import cc.n0th1ng.tripmoney.data.entity.ExchangeRate
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.utils.Icons
+import cc.n0th1ng.tripmoney.utils.colors
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -96,19 +97,12 @@ private class DatabasePrepopulator(
         tripDao.insert(Trip(name = "Włochy", startDate = "2025-01-01", currency = "PLN"))
         tripDao.insert(Trip(name = "Szwajcaria", startDate = "2025-03-01", currency = "EUR"))
         tripDao.insert(Trip(name = "Portugalia", startDate = "2026-03-01", currency = "USD"))
-        categoryDao.insert(Category(name = "Hotel", icon = Icons.HOTEL, color = "#B3E5FC"))
-        categoryDao.insert(Category(name = "Jedzenie", icon = Icons.RESTAURANT, color = "#C8E6C9"))
-        categoryDao.insert(Category(name = "Transport", icon = Icons.FLIGHT, color = "#FFCDD2"))
-        categoryDao.insert(Category(name = "Rozrywka", icon = Icons.ATTRACTION, color = "#FFF9C4"))
-        categoryDao.insert(Category(name = "Zakupy", icon = Icons.GROCERIES, color = "#E1BEE7"))
-        categoryDao.insert(Category(name = "Zakupy1", icon = Icons.GROCERIES, color = "#D7CCC8"))
-        categoryDao.insert(Category(name = "Zakupy2", icon = Icons.GROCERIES, color = "#BBDEFB"))
-        categoryDao.insert(Category(name = "Zakupy3", icon = Icons.GROCERIES, color = "#D1C4E9"))
-        categoryDao.insert(Category(name = "Zakupy4", icon = Icons.GROCERIES, color = "#DCEDC8"))
-        categoryDao.insert(Category(name = "Zakupy5", icon = Icons.GROCERIES, color = "#F0F4C3"))
-        categoryDao.insert(Category(name = "Zakupy6", icon = Icons.GROCERIES, color = "#FFE0B2"))
-        categoryDao.insert(Category(name = "Zakupy7", icon = Icons.GROCERIES, color = "#D7CCC8"))
-        categoryDao.insert(Category(name = "Zakupy8", icon = Icons.GROCERIES, color = "#CFD8DC"))
+        categoryDao.insert(Category(name = "Hotel", icon = Icons.HOTEL, color = colors.random()))
+        categoryDao.insert(Category(name = "Jedzenie", icon = Icons.RESTAURANT, color = colors.random()))
+        categoryDao.insert(Category(name = "Transport", icon = Icons.FLIGHT, color = colors.random()))
+        categoryDao.insert(Category(name = "Rozrywka", icon = Icons.ATTRACTION, color = colors.random()))
+        categoryDao.insert(Category(name = "Zakupy", icon = Icons.GROCERIES,color = colors.random()))
+
 
         val now = LocalDateTime.now()
         expenseDao.insert(

@@ -23,4 +23,9 @@ interface TripDao {
 
     @Delete
     suspend fun delete(trip: Trip)
+
+    @Query(
+        "SELECT * FROM trip where trip.id = :tripId"
+    )
+    fun trip(tripId: Int): Trip?
 }

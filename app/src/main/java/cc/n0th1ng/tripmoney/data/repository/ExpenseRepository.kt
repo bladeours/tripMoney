@@ -5,6 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import cc.n0th1ng.tripmoney.data.dao.ExpenseDao
+import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategoryRaw
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import kotlinx.coroutines.flow.Flow
@@ -22,10 +23,18 @@ class ExpenseRepository @Inject constructor(private val expenseDao: ExpenseDao) 
         expenseDao.delete(expense)
     }
 
-    fun getExpenses(tripId: Int): Flow<PagingData<ExpenseDto>> {
+    fun getExpensesPaged(tripId: Int): Flow<PagingData<ExpenseDto>> {
         return Pager(
             config = PagingConfig(pageSize = 50, enablePlaceholders = false),
-            pagingSourceFactory = { expenseDao.expenseDto(tripId) }
+            pagingSourceFactory = { expenseDao.expenseDtoPaged(tripId) }
         ).flow
+    }
+
+    fun getExpenses(tripId: Int): Flow<List<ExpenseDto>> {
+        return expenseDao.expenseDto(tripId)
+    }
+
+    fun getSummaryPerCategory(tripId: Int): Flow<List<SummaryPerCategoryRaw>> {
+        return expenseDao.summaryPerCategoryRaw(tripId)
     }
 }

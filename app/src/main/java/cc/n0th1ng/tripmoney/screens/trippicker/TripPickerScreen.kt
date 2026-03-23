@@ -182,6 +182,13 @@ fun TripCard(
 ) {
     val haptics = LocalHapticFeedback.current
     ElevatedCard(
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.secondary
+            }
+        ),
         modifier = Modifier
             .height(100.dp)
             .combinedClickable(enabled = true, onLongClick = {

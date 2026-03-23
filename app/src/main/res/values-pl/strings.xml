@@ -20,4 +20,5 @@
     <string name="name">Nazwa</string>
     <string name="edit_trip">Edytuj wycieczkę</string>
     <string name="edit_expense">Edytuj wydatek</string>
+    <string name="default_currency">Domyślna waluta</string>
 </resources>

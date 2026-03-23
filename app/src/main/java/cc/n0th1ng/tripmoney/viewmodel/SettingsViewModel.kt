@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
 import cc.n0th1ng.tripmoney.data.repository.PreferencesRepository
+import cc.n0th1ng.tripmoney.utils.Currencies
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +35,17 @@ class SettingsViewModel @Inject constructor(
         viewModelScope, SharingStarted.WhileSubscribed(5000),
         -1
     )
+
+    val defaultCurrency = repo.defaultCurrencyFlow.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000),
+        Currencies.default()
+    )
+
+    fun setDefaultCurrency(currency: Currencies) {
+        viewModelScope.launch {
+            repo.saveDefaultCurrency(currency)
+        }
+    }
 
     fun setCurrentTrip(tripId: Int) {
         viewModelScope.launch {
