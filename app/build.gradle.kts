@@ -102,4 +102,5 @@ dependencies {
     implementation("io.ktor:ktor-client-core:3.4.1")
     implementation("io.ktor:ktor-client-okhttp:3.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.10.0")
+    implementation("org.apache.commons:commons-csv:1.5")
 }

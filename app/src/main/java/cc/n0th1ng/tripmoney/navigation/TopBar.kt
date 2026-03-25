@@ -11,6 +11,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import cc.n0th1ng.tripmoney.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +32,7 @@ fun TopBar(onClick: () -> Unit, title: String = "") {
 fun TopBarSettings(navController: NavHostController) {
 
     TopAppBar(
-        title = { Text("Settings") },
+        title = { Text(stringResource(R.string.settings)) },
         navigationIcon = {
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

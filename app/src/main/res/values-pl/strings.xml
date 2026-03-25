@@ -21,4 +21,10 @@
     <string name="edit_trip">Edytuj wycieczkę</string>
     <string name="edit_expense">Edytuj wydatek</string>
     <string name="default_currency">Domyślna waluta</string>
+    <string name="total_expenses">Suma wydatków</string>
+    <string name="settings">Ustawienia</string>
+    <string name="pick_trip">Wybierz wycieczkę</string>
+    <string name="list_of_expenses">Lista wydatków</string>
+    <string name="statistics">Statystyki</string>
+    <string name="export_to_csv">Eksport do CSV</string>
 </resources>

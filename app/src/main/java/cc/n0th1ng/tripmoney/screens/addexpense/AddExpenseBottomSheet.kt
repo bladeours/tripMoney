@@ -1,6 +1,7 @@
 package cc.n0th1ng.tripmoney.screens.addexpense
 
 import android.annotation.SuppressLint
+import android.graphics.drawable.PaintDrawable
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -21,9 +22,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -34,6 +40,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,10 +49,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.modifier.modifierLocalMapOf
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.sensitiveContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,21 +69,24 @@ import cc.n0th1ng.tripmoney.R
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
+import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.screens.listexpense.CategorySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.DateTimePicker
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
+import cc.n0th1ng.tripmoney.utils.colors
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
+import com.composables.icons.materialsymbols.outlined.R.drawable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-
+import kotlin.collections.listOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -88,23 +101,48 @@ fun AddExpenseBottomSheet(
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
-    val currentTrip = tripViewModel.getTrip(currentTripId)
+    val currentTrip = tripViewModel.getTrip(currentTripId)!!
     val categories by expenseAndCategoryViewModel.getCategories().collectAsState(emptyList())
+    AddExpenseBottomSheet(
+        onSave = onSave,
+        onDismiss = onDismiss,
+        expenseDtoToEdit = expenseDtoToEdit,
+        state = state,
+        currentTrip = currentTrip,
+        categories = categories
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun AddExpenseBottomSheet(
+    onSave: (Expense) -> Unit,
+    onDismiss: () -> Unit,
+    expenseDtoToEdit: ExpenseDto?,
+    state: SheetState,
+    currentTrip: Trip,
+    categories: List<Category>
+) {
+    val currentTripId = currentTrip.id
+
     if (categories.isEmpty()) {
         return
     }
+
     var amount by remember {
         mutableStateOf(
             expenseDtoToEdit?.expense?.amount?.toString() ?: "0.00"
         )
     }
+    var equationResult by remember { mutableDoubleStateOf(0.0) }
     val dummyFocusRequester = remember { FocusRequester() }
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showDateTimePicker by remember { mutableStateOf(false) }
     var currency by remember {
         mutableStateOf(
-            expenseDtoToEdit?.expense?.currency ?: currentTrip?.currency ?: Currencies.default().name
+            expenseDtoToEdit?.expense?.currency ?: currentTrip.currency
         )
     }
     var category by remember { mutableStateOf(expenseDtoToEdit?.category ?: categories[0]) }
@@ -122,6 +160,8 @@ fun AddExpenseBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = state,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
     ) {
         Column(
             modifier = Modifier
@@ -135,95 +175,126 @@ fun AddExpenseBottomSheet(
                     .fillMaxWidth()
                     .padding(start = 15.dp),
                 text = stringResource(if (expenseDtoToEdit == null) R.string.add_expense else R.string.edit_expense),
-                fontWeight = FontWeight.Bold,
-                fontSize = 35.sp,
+                style = MaterialTheme.typography.displaySmall,
                 textAlign = TextAlign.Start
             )
-            HorizontalDivider(modifier = Modifier.fillMaxWidth())
-            Row(
-                modifier = Modifier.fillMaxWidth(0.9f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(10.dp)
             ) {
-                Text(
-                    text = amount.ifEmpty { "0.00" },
-                    fontSize = 25.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                CurrencyButton(onClick = { showCurrencyDialog = true }, text = currency)
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(0.9f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { showDateTimePicker = true },
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = datetime.format(DateTimeFormatter.ofPattern("dd.MM HH:mm")),
-                        fontSize = 17.sp
-                    )
+                    Column{
+                        Text(
+                            text = amount.ifEmpty { "0.00" },
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if(amount.contains(Regex("[+\\/*-]\\d+"))) "%.2f".format(equationResult) else "",
+                            fontSize = 14.sp,
+                        )
+                    }
+                    CurrencyButton(onClick = { showCurrencyDialog = true }, text = currency)
                 }
-                CategoryButton(
-                    onClick = { showCategoryDialog = true },
-                    category = category,
-                    modifier = Modifier.weight(1f)
+                Box(
+                    modifier = Modifier
+                        .size(0.dp)
+                        .focusRequester(dummyFocusRequester)
+                        .focusable()
                 )
-
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
                 NoteInput(
                     note = note,
                     onTextChange = { newNote -> note = newNote },
-                    modifier = Modifier.fillMaxWidth(0.9f),
+                    modifier = Modifier.fillMaxWidth(),
                     focusRequester = dummyFocusRequester
                 )
-            }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = { showDateTimePicker = true },
+                        modifier = Modifier.weight(1f),
+                        shape = MaterialTheme.shapes.medium,
 
-            Box(
-                modifier = Modifier
-                    .size(0.dp)
-                    .focusRequester(dummyFocusRequester)
-                    .focusable()
-            )
-            NumberKeyboard(
-                onNumberClick = { number ->
-                    val newText = (if (amount == "0.00") "" else amount) + number
-                    if (newText.isDoubleTwoDigitsAboveZero()) {
-                        amount = newText
-                        enableSave = true
-                    } else if (amount == "0.00") {
-                        enableSave = false
+                        ) {
+                        Text(
+                            text = datetime.format(DateTimeFormatter.ofPattern("dd.MM HH:mm")),
+                            fontSize = 17.sp
+                        )
                     }
-                    dummyFocusRequester.requestFocus()
-                },
-                onBackspaceClick = {
-                    if (amount == "0.00") return@NumberKeyboard
-                    amount = amount.safeSubstring(0, amount.length - 1)
-                    enableSave = amount.isDoubleTwoDigitsAboveZero()
-                },
-                onSave = {
-                    val expenseToSave = Expense(
-                        amount = amount.toDouble(),
-                        currency = currency,
-                        note = note,
-                        datetime = datetime.toString(),
-                        categoryId = category.id,
-                        tripId = currentTripId
+                    CategoryButton(
+                        onClick = { showCategoryDialog = true },
+                        category = category,
+                        modifier = Modifier.weight(1f)
                     )
-                    onSave(
-                        if (expenseDtoToEdit == null) expenseToSave
-                        else expenseToSave.copy(id = expenseDtoToEdit.expense.id)
-                    )
-                }, enableSave = enableSave
-            )
 
+                }
+
+                NumberKeyboard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onOperatorClick = { operator ->
+                        if(amount.isDoubleTwoDigitsOrEquation() && amount.contains(Regex("[+\\/*-]\\d+"))) {
+                            amount = evaluate(amount).toString()
+//                            equationResult = 0.0
+                        }
+                        val newText = amount + operator
+                        if(newText.isDoubleTwoDigitsOrEquation()) {
+                            amount = newText
+                            enableSave = false
+                        }
+                    },
+                    onNumberClick = { number ->
+                        val newText = (if (amount == "0.00") "" else amount) + number
+                        if (newText.isDoubleTwoDigitsOrEquation()) {
+                            amount = newText
+                            equationResult = evaluate(amount)
+                            enableSave = equationResult > 0
+                        } else if (amount == "0.00") {
+                            enableSave = false
+                        }
+                        dummyFocusRequester.requestFocus()
+                    },
+                    onBackspaceClick = {
+                        if (amount == "0.00") return@NumberKeyboard
+                        amount = amount.safeSubstring(0, amount.length - 1)
+                        enableSave = amount.isDoubleTwoDigitsOrEquation()
+                        equationResult = evaluate(amount)
+                        enableSave = amount.isDoubleTwoDigitsOrEquation() && equationResult > 0
+                    },
+                )
+
+                SaveButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = enableSave,
+                    onClick = {
+                        val expenseToSave = Expense(
+                            amount = equationResult,
+                            currency = currency,
+                            note = note,
+                            datetime = datetime.toString(),
+                            categoryId = category.id,
+                            tripId = currentTripId
+                        )
+                        onSave(
+                            if (expenseDtoToEdit == null) expenseToSave
+                            else expenseToSave.copy(id = expenseDtoToEdit.expense.id)
+                        )
+                    })
+            }
         }
     }
+
 
     if (showDateTimePicker) {
         DateTimePicker(datetime, onChange = { newDateTime ->
@@ -264,12 +335,50 @@ fun String.safeSubstring(start: Int, end: Int): String {
     }
 }
 
-fun String.isDoubleTwoDigitsAboveZero(): Boolean {
-    return this.toDoubleOrNull() != null && this.matches(Regex("^\\d*(\\.\\d{0,2})?$")) && this.toDouble() > 0
+private fun evaluate(equation: String): Double {
+    if (equation.isEmpty()) return 0.0
+
+    val operatorIndex = equation.indexOfFirstIndexed { i, c ->
+        i != 0 && c in "+-*/"
+    }
+
+    if (operatorIndex == -1) return equation.toDouble()
+
+    val leftString = equation.substring(0, operatorIndex)
+    val rightString = equation.substring(operatorIndex + 1)
+
+    if (leftString.isEmpty() || rightString.isEmpty()) return 0.0
+
+    val left = leftString.toDouble()
+    val right = rightString.toDouble()
+
+    return when (equation[operatorIndex]) {
+        '+' -> left + right
+        '-' -> left - right
+        '*' -> left * right
+        '/' -> left / right
+        else -> 0.0
+    }
+}
+
+private inline fun String.indexOfFirstIndexed(predicate: (index: Int, Char) -> Boolean): Int {
+    for (i in indices) {
+        if (predicate(i, this[i])) return i
+    }
+    return -1
+}
+
+private fun String.isDoubleTwoDigitsOrEquation(): Boolean {
+    return this != "0.00" && this.matches(Regex("^(-?(0\\.?|0\\.\\d{1,2}|[1-9]\\d*(\\.\\d{0,2})?))([+\\/*-](0\\.?|0\\.\\d{1,2}|[1-9]\\d*(\\.\\d{0,2})?)?)?$"))
 }
 
 @Composable
-fun NoteInput(note: String, onTextChange: (String) -> Unit, modifier: Modifier = Modifier, focusRequester: FocusRequester) {
+fun NoteInput(
+    note: String,
+    onTextChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester
+) {
     var text by remember { mutableStateOf(note) }
 
     OutlinedTextField(
@@ -292,33 +401,36 @@ fun NoteInput(note: String, onTextChange: (String) -> Unit, modifier: Modifier =
 
 @Composable
 fun CurrencyButton(modifier: Modifier = Modifier, onClick: () -> Unit, text: String) {
-    OutlinedButton(onClick = onClick, modifier = modifier) {
+    Button(onClick = onClick, modifier = modifier, shape = MaterialTheme.shapes.medium) {
         Text(text)
     }
 }
 
 @Composable
 fun CategoryButton(onClick: () -> Unit, category: Category, modifier: Modifier = Modifier) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
-        modifier = modifier
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.buttonColors()
+            .copy(containerColor = Color(category.color.toColorInt()), contentColor = Color.Black)
     ) {
         Icon(
             modifier = Modifier.padding(end = 10.dp),
             painter = painterResource(category.icon.resource),
             contentDescription = stringResource(R.string.category),
-            tint = Color(category.color.toColorInt())
         )
-        Text(category.name, color = Color(category.color.toColorInt()))
+        Text(category.name)
     }
 }
 
 @Composable
-fun SaveButton(enabled: Boolean, onClick: () -> Unit) {
-    OutlinedButton(
+fun SaveButton(modifier: Modifier = Modifier, enabled: Boolean, onClick: () -> Unit) {
+    Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium
     ) {
         Icon(
             imageVector = Icons.Filled.Check,
@@ -332,273 +444,171 @@ fun NumberKeyboard(
     modifier: Modifier = Modifier,
     onNumberClick: (String) -> Unit,
     onBackspaceClick: () -> Unit,
-    onSave: () -> Unit,
-    enableSave: Boolean
+    onOperatorClick: (String) -> Unit
 ) {
-    val buttonModifier = Modifier
-        .padding(4.dp)
-        .aspectRatio(2f)
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            TextButton(
-                onClick = { onNumberClick("1") },
-                modifier = buttonModifier.weight(1f)
+        keyboard.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text("1", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("2") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("2", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("3") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("3", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("+", fontSize = 20.sp)
-            }
-        }
+                row.forEach { key ->
+                    when (key) {
+                        "backspace" -> KeyboardButton(
+                            icon = painterResource(drawable.materialsymbols_ic_arrow_left_alt_outlined),
+                            onClick = onBackspaceClick,
+                            modifier = Modifier.weight(1f),
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            TextButton(
-                onClick = { onNumberClick("4") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("4", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("5") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("5", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("6") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("6", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("-", fontSize = 20.sp)
-            }
-        }
+                        "+", "/", "-", "*" -> KeyboardButton(
+                            text = key,
+                            onClick = { onOperatorClick(key) },
+                            modifier = Modifier.weight(1f),
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            TextButton(
-                onClick = { onNumberClick("7") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("7", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("8") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("8", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("9") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("9", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("*", fontSize = 20.sp)
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            TextButton(
-                onClick = { onNumberClick(".") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text(".", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = { onNumberClick("0") },
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Text("0", fontSize = 20.sp)
-            }
-            TextButton(
-                onClick = onBackspaceClick,
-                modifier = buttonModifier.weight(1f)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.backspace)
-                )
-            }
-            TextButton(
-                onClick = onSave,
-                modifier = buttonModifier.weight(1f),
-                enabled = enableSave
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = stringResource(R.string.backspace)
-                )
+                        else -> KeyboardButton(
+                            text = key,
+                            onClick = { onNumberClick(key) },
+                            modifier = Modifier.weight(1f),
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        )
+                    }
+                }
             }
         }
     }
 }
 
+@Composable
+fun KeyboardButton(
+    text: String? = null,
+    icon: Painter? = null,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary
+) {
+    Button(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        modifier = modifier
+            .padding(4.dp)
+            .aspectRatio(2.5f),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        when {
+            text != null -> Text(
+                text,
+                style = MaterialTheme.typography.titleMedium
+            )
 
-//@SuppressLint("CoroutineCreationDuringComposition")
-//@RequiresApi(Build.VERSION_CODES.O)
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Preview
-//@Composable
-//fun PreviewLight() {
-//    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-//    CoroutineScope(Dispatchers.IO).launch {
-//        sheetState.show()
-//    }
-//
-//    TripMoneyTheme {
-//        AddExpenseBottomSheet(
-//            {}, {}, null, sheetState,
-//            categories = listOf(
-//                Category(
-//                    name = "Hotel",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.HOTEL,
-//                    color = "#B3E5FC"
-//                ),
-//                Category(
-//                    name = "Jedzenie",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.RESTAURANT,
-//                    color = "#C8E6C9"
-//                ),
-//                Category(
-//                    name = "Transport",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.FLIGHT,
-//                    color = "#FFCDD2"
-//                ),
-//                Category(
-//                    name = "Rozrywka",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.ATTRACTION,
-//                    color = "#FFF9C4"
-//                ),
-//                Category(
-//                    name = "Zakupy",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#E1BEE7"
-//                ),
-//                Category(
-//                    name = "Zakupy1",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#D7CCC8"
-//                ),
-//                Category(
-//                    name = "Zakupy2",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#BBDEFB"
-//                ),
-//                Category(
-//                    name = "Zakupy3",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#D1C4E9"
-//                ),
-//                Category(
-//                    name = "Zakupy4",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#DCEDC8"
-//                ),
-//            )
-//        )
-//    }
-//}
-//
-//@SuppressLint("CoroutineCreationDuringComposition")
-//@RequiresApi(Build.VERSION_CODES.O)
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Preview
-//@Composable
-//fun PreviewDark() {
-//    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-//    CoroutineScope(Dispatchers.IO).launch {
-//        sheetState.show()
-//    }
-//
-//    TripMoneyTheme(darkTheme = true) {
-//        AddExpenseBottomSheet(
-//            {}, {}, null, sheetState,
-//            categories = listOf(
-//                Category(
-//                    name = "Hotel",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.HOTEL,
-//                    color = "#B3E5FC"
-//                ),
-//                Category(
-//                    name = "Jedzenie",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.RESTAURANT,
-//                    color = "#C8E6C9"
-//                ),
-//                Category(
-//                    name = "Transport",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.FLIGHT,
-//                    color = "#FFCDD2"
-//                ),
-//                Category(
-//                    name = "Rozrywka",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.ATTRACTION,
-//                    color = "#FFF9C4"
-//                ),
-//                Category(
-//                    name = "Zakupy",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#E1BEE7"
-//                ),
-//                Category(
-//                    name = "Zakupy1",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#D7CCC8"
-//                ),
-//                Category(
-//                    name = "Zakupy2",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#BBDEFB"
-//                ),
-//                Category(
-//                    name = "Zakupy3",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#D1C4E9"
-//                ),
-//                Category(
-//                    name = "Zakupy4",
-//                    icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//                    color = "#DCEDC8"
-//                ),
-//            )
-//        )
-//    }
-//}
+            icon != null -> Icon(painter = icon, contentDescription = null)
+        }
+    }
+}
+
+val keyboard = listOf(
+    listOf("+", "-", "*", "/"),
+    listOf("1", "2", "3"),
+    listOf("4", "5", "6"),
+    listOf("7", "8", "9"),
+    listOf(".", "0", "backspace")
+)
+
+
+@SuppressLint("CoroutineCreationDuringComposition")
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+@AllPreviews
+@Composable
+fun PreviewAddExpenseDisabled() {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    CoroutineScope(Dispatchers.IO).launch {
+        sheetState.show()
+    }
+
+    TripMoneyTheme {
+        AddExpenseBottomSheet(
+            onSave = {},
+            onDismiss = {},
+            expenseDtoToEdit = null,
+            state = sheetState,
+            currentTrip = Trip(1, "Trip", "2020-01-01", Currencies.entries.random().name),
+            categories = categoriesToPreview
+        )
+    }
+
+}
+
+@SuppressLint("CoroutineCreationDuringComposition")
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+@AllPreviews
+@Composable
+fun PreviewAddExpenseEnabled() {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    CoroutineScope(Dispatchers.IO).launch {
+        sheetState.show()
+    }
+
+    TripMoneyTheme {
+        AddExpenseBottomSheet(
+            onSave = {},
+            onDismiss = {},
+            expenseDtoToEdit = ExpenseDto(
+                Expense(
+                    amount = 10.31,
+                    currency = "PLN",
+                    note = "some note",
+                    datetime = "2025-11-30T10:16:26.939",
+                    categoryId = 1,
+                    tripId = 1
+                ), category = categoriesToPreview.get(0), Trip(1, "Włochy", "2025-01-02", "PLN")
+            ),
+            state = sheetState,
+            currentTrip = Trip(1, "Trip", "2020-01-01", Currencies.entries.random().name),
+            categories = categoriesToPreview
+        )
+    }
+
+}
+
+val categoriesToPreview = listOf(
+    Category(
+        name = "Hotel",
+        icon = cc.n0th1ng.tripmoney.utils.Icons.HOTEL,
+        color = colors.random()
+    ),
+    Category(
+        name = "Jedzenie",
+        icon = cc.n0th1ng.tripmoney.utils.Icons.RESTAURANT,
+        color = colors.random()
+    ),
+    Category(
+        name = "Transport",
+        icon = cc.n0th1ng.tripmoney.utils.Icons.FLIGHT,
+        color = colors.random()
+    ),
+    Category(
+        name = "Rozrywka",
+        icon = cc.n0th1ng.tripmoney.utils.Icons.ATTRACTION,
+        color = colors.random()
+    ),
+    Category(
+        name = "Zakupy",
+        icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
+        color = colors.random()
+    ),
+)

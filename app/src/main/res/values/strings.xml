@@ -21,4 +21,10 @@
     <string name="edit_trip">Edit trip</string>
     <string name="edit_expense">Edit expense</string>
     <string name="default_currency">Default currency</string>
+    <string name="total_expenses">Total expenses</string>
+    <string name="settings">Settings</string>
+    <string name="pick_trip">Pick trip</string>
+    <string name="list_of_expenses">List of expenses</string>
+    <string name="statistics">Statistics</string>
+    <string name="export_to_csv">Export to CSV</string>
 </resources>

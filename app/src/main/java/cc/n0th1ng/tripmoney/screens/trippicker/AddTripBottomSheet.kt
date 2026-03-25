@@ -1,5 +1,6 @@
 package cc.n0th1ng.tripmoney.screens.trippicker
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -17,12 +18,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,9 +47,14 @@ import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.screens.addexpense.CurrencyButton
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.DatePicker
+import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import io.ktor.http.hostIsIp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -59,6 +67,29 @@ fun AddTripBottomSheet(
     tripToEdit: Trip?,
     sheetState: SheetState
 ) {
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val defaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
+
+    AddTripBottomSheet(
+        onDismiss = onDismiss,
+        onSave = onSave,
+        tripToEdit = tripToEdit,
+        sheetState = sheetState,
+        defaultCurrency = defaultCurrency
+    )
+}
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddTripBottomSheet(
+    onDismiss: () -> Unit,
+    onSave: (Trip) -> Unit,
+    tripToEdit: Trip?,
+    sheetState: SheetState,
+    defaultCurrency: Currencies
+) {
 
     var name by remember { mutableStateOf(tripToEdit?.name ?: "") }
     var startDate by remember {
@@ -66,8 +97,7 @@ fun AddTripBottomSheet(
             LocalDate.parse(tripToEdit?.startDate ?: LocalDate.now().toString())
         )
     }
-    val settingsViewModel: SettingsViewModel = hiltViewModel()
-    val defaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
+
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var currency by remember { mutableStateOf(tripToEdit?.currency ?: defaultCurrency.name) }
@@ -87,7 +117,7 @@ fun AddTripBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 15.dp),
-                text = stringResource(if(tripToEdit == null) R.string.add_trip else R.string.edit_trip),
+                text = stringResource(if (tripToEdit == null) R.string.add_trip else R.string.edit_trip),
                 fontWeight = FontWeight.Bold,
                 fontSize = 35.sp,
                 textAlign = TextAlign.Start
@@ -101,32 +131,35 @@ fun AddTripBottomSheet(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                CurrencyButton(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(1f),
-                    onClick = { showCurrencyDialog = true }, text = currency
-                )
-                OutlinedButton(
+                Button(
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .weight(1f),
+                    shape = MaterialTheme.shapes.medium,
                     onClick = { showDatePicker = true }) {
                     Text(
                         text = startDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                         fontSize = 17.sp
                     )
                 }
+                CurrencyButton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(1f),
+                    onClick = { showCurrencyDialog = true }, text = currency
+                )
 
             }
 
             Button(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 enabled = enableSave,
+                shape = MaterialTheme.shapes.medium,
                 onClick = {
-                    val trip = Trip(name = name, startDate = startDate.toString(), currency = currency)
+                    val trip =
+                        Trip(name = name, startDate = startDate.toString(), currency = currency)
 
-                    onSave(if(tripToEdit == null) trip else trip.copy(id = tripToEdit.id))
+                    onSave(if (tripToEdit == null) trip else trip.copy(id = tripToEdit.id))
                 }) {
                 Icon(
                     imageVector = Icons.Filled.Check,
@@ -166,4 +199,41 @@ fun NameInput(name: String, onTextChange: (String) -> Unit) {
             onTextChange(text)
         }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
     )
+}
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("CoroutineCreationDuringComposition")
+@OptIn(ExperimentalMaterial3Api::class)
+@AllPreviews
+@Composable
+fun PreviewAddTripBottomSheet() {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    CoroutineScope(Dispatchers.IO).launch {
+        sheetState.show()
+    }
+    TripMoneyTheme {
+        AddTripBottomSheet({}, {}, null, sheetState, defaultCurrency = Currencies.entries.random())
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("CoroutineCreationDuringComposition")
+@OptIn(ExperimentalMaterial3Api::class)
+@AllPreviews
+@Composable
+fun PreviewAddTripBottomSheetEditTrip() {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    CoroutineScope(Dispatchers.IO).launch {
+        sheetState.show()
+    }
+    TripMoneyTheme {
+        AddTripBottomSheet(
+            {},
+            {},
+            Trip(1, "Włochy", "2025-01-02", "PLN"),
+            sheetState,
+            defaultCurrency = Currencies.entries.random()
+        )
+    }
 }

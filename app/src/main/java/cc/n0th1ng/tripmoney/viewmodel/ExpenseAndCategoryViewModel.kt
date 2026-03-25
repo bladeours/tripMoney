@@ -18,11 +18,16 @@ import cc.n0th1ng.tripmoney.data.repository.TripRepository
 import cc.n0th1ng.tripmoney.utils.Currencies
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVPrinter
+import java.io.File
 import java.time.LocalDateTime
 import javax.inject.Inject
+
 
 @HiltViewModel
 open class ExpenseAndCategoryViewModel @Inject constructor(
@@ -56,11 +61,38 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun generateCSVToFile(tripId: Int, file: File) {
+        file.writer().use { writer ->
+            CSVPrinter(
+                writer,
+                CSVFormat.DEFAULT.withHeader("date", "category", "currency", "amount")
+            ).use { printer ->
+                expenseRepo.getExpenses(tripId).first().forEach { expenseDto ->
+                    printer.printRecord(
+                        expenseDto.expense.datetime,
+                        expenseDto.category.name,
+                        expenseDto.expense.currency,
+                        expenseDto.expense.amount
+                    )
+
+                }
+            }
+        }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getSummaryAmount(tripId: Int): Flow<Double> {
+        return getExpensesWithConvertedAmounts(tripId).map { list ->
+            list.sumOf { it.convertedAmount }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun getSummaryPerCategory(tripId: Int): Flow<List<SummaryPerCategory>> {
         val tripCurrency = tripRepo.getTrip(tripId)?.currency ?: Currencies.default().name
         return getExpensesWithConvertedAmounts(tripId)
             .map { list ->
-                // Compute summary
                 val sumOfAll = list.sumOf { it.convertedAmount }
                 list.groupBy { it.expenseDto.category }
                     .map { (category, expenses) ->
@@ -84,7 +116,7 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
                     val convertedAmount =
                         if (expenseDto.expense.currency != expenseDto.trip.currency) {
                             runBlocking {
-                                expenseDto.toExpenseDtoWithConvertedAmount()
+                                expenseDto.convertedAmount()
                             }
                         } else {
                             expenseDto.expense.amount
@@ -102,7 +134,7 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
                     val convertedAmount =
                         if (expenseDto.expense.currency != expenseDto.trip.currency) {
                             runBlocking {
-                                expenseDto.toExpenseDtoWithConvertedAmount()
+                                expenseDto.convertedAmount()
                             }
                         } else {
                             expenseDto.expense.amount
@@ -120,7 +152,7 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun ExpenseDto.toExpenseDtoWithConvertedAmount(): Double {
+    suspend fun ExpenseDto.convertedAmount(): Double {
         return exchangeRateRepository.getRate(
             Currencies.valueOf(this.expense.currency),
             Currencies.valueOf(this.trip.currency),
