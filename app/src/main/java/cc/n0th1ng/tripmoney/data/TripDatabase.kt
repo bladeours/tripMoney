@@ -94,14 +94,17 @@ private class DatabasePrepopulator(
 ) {
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun prepopulate() {
-        tripDao.insert(Trip(name = "Włochy", startDate = "2025-01-01", currency = "PLN"))
+        tripDao.insert(Trip(name = "Włochy", startDate = "2026-03-01", currency = "PLN"))
         tripDao.insert(Trip(name = "Szwajcaria", startDate = "2025-03-01", currency = "EUR"))
-        tripDao.insert(Trip(name = "Portugalia", startDate = "2026-03-01", currency = "USD"))
-        categoryDao.insert(Category(name = "Hotel", icon = Icons.HOTEL, color = colors.random()))
-        categoryDao.insert(Category(name = "Jedzenie", icon = Icons.RESTAURANT, color = colors.random()))
-        categoryDao.insert(Category(name = "Transport", icon = Icons.FLIGHT, color = colors.random()))
-        categoryDao.insert(Category(name = "Rozrywka", icon = Icons.ATTRACTION, color = colors.random()))
-        categoryDao.insert(Category(name = "Zakupy", icon = Icons.GROCERIES,color = colors.random()))
+        tripDao.insert(Trip(name = "Portugalia", startDate = "2025-03-01", currency = "USD"))
+        categoryDao.insert(Category(name = "Accomodation", icon = Icons.HOTEL, color = colors.random()))
+        categoryDao.insert(Category(name = "Transport", icon = Icons.TRANSPORT, color = colors.random()))
+        categoryDao.insert(Category(name = "Flight", icon = Icons.FLIGHT, color = colors.random()))
+        categoryDao.insert(Category(name = "Restaurants", icon = Icons.RESTAURANT, color = colors.random()))
+        categoryDao.insert(Category(name = "Groceries", icon = Icons.GROCERIES, color = colors.random()))
+        categoryDao.insert(Category(name = "Coffee", icon = Icons.COFFEE,color = colors.random()))
+        categoryDao.insert(Category(name = "Entertainment", icon = Icons.ENTERTAINMENT,color = colors.random()))
+        categoryDao.insert(Category(name = "Laundry", icon = Icons.LAUNDRY,color = colors.random()))
 
 
         val now = LocalDateTime.now()

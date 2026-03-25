@@ -7,16 +7,12 @@ import com.composables.icons.materialsymbols.outlined.R
 enum class Icons(@DrawableRes val resource: Int) {
     HOTEL(R.drawable.materialsymbols_ic_hotel_outlined),
     RESTAURANT(R.drawable.materialsymbols_ic_restaurant_outlined),
+    TRANSPORT(R.drawable.materialsymbols_ic_local_taxi_outlined),
     FLIGHT(R.drawable.materialsymbols_ic_flight_outlined),
-    ATTRACTION(R.drawable.materialsymbols_ic_museum_outlined),
+    ATTRACTION(R.drawable.materialsymbols_ic_theater_comedy_outlined),
     GROCERIES(R.drawable.materialsymbols_ic_grocery_outlined),
-    GROCERIES1(R.drawable.materialsymbols_ic_airline_seat_recline_normal_outlined),
-    GROCERIES2(R.drawable.materialsymbols_ic_grocery_outlined),
-    GROCERIES3(R.drawable.materialsymbols_ic_grocery_outlined),
-    GROCERIES4(R.drawable.materialsymbols_ic_grocery_outlined),
-    GROCERIES5(R.drawable.materialsymbols_ic_grocery_outlined),
-    GROCERIES6(R.drawable.materialsymbols_ic_grocery_outlined),
-    GROCERIES7(R.drawable.materialsymbols_ic_grocery_outlined)
-
-
+    COFFEE(R.drawable.materialsymbols_ic_local_cafe_outlined),
+    GENERAL(R.drawable.materialsymbols_ic_shoppingmode_outlined),
+    ENTERTAINMENT(R.drawable.materialsymbols_ic_theaters_outlined),
+    LAUNDRY(R.drawable.materialsymbols_ic_local_laundry_service_outlined)
 }
