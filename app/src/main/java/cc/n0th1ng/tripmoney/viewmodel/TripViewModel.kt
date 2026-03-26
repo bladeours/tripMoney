@@ -18,7 +18,7 @@ class TripViewModel @Inject constructor(private val repository: TripRepository) 
 
     fun getTrips(): Flow<PagingData<Trip>> = repository.getTrips().cachedIn(viewModelScope)
 
-    fun getTrip(tripId: Int): Trip? = repository.getTrip(tripId)
+    fun getTrip(tripId: Int): Flow<Trip?> = repository.getTrip(tripId)
 
     fun delete(trip: Trip) {
         viewModelScope.launch {

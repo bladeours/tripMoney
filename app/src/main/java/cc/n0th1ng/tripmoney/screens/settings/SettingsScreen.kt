@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.R.*
+import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
@@ -66,7 +67,7 @@ fun SettingsScreen() {
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
-    val currentTrip = tripViewModel.getTrip(currentTripId)
+    val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
     val context = LocalContext.current
     val tripName = currentTrip?.name ?: ""
     val scope = rememberCoroutineScope()

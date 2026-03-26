@@ -1,43 +1,38 @@
 package cc.n0th1ng.tripmoney.screens.addexpense
 
 import android.annotation.SuppressLint
-import android.graphics.drawable.PaintDrawable
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -50,17 +45,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
-import androidx.compose.ui.modifier.modifierLocalMapOf
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.sensitiveContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
@@ -83,10 +74,12 @@ import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import com.composables.icons.materialsymbols.outlined.R.drawable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.collections.listOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -101,14 +94,15 @@ fun AddExpenseBottomSheet(
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
-    val currentTrip = tripViewModel.getTrip(currentTripId)!!
+    val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
+
     val categories by expenseAndCategoryViewModel.getCategories().collectAsState(emptyList())
     AddExpenseBottomSheet(
         onSave = onSave,
         onDismiss = onDismiss,
         expenseDtoToEdit = expenseDtoToEdit,
         state = state,
-        currentTrip = currentTrip,
+        currentTrip = currentTrip!!,
         categories = categories
     )
 }
@@ -148,9 +142,7 @@ fun AddExpenseBottomSheet(
     var category by remember { mutableStateOf(expenseDtoToEdit?.category ?: categories[0]) }
     var datetime by remember {
         mutableStateOf(
-            LocalDateTime.parse(
-                expenseDtoToEdit?.expense?.datetime ?: LocalDateTime.now().toString()
-            )
+            expenseDtoToEdit?.expense?.datetime ?: LocalDateTime.now()
         )
     }
     var note by remember { mutableStateOf(expenseDtoToEdit?.expense?.note ?: "") }
@@ -192,14 +184,16 @@ fun AddExpenseBottomSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column{
+                    Column {
                         Text(
                             text = amount.ifEmpty { "0.00" },
                             fontSize = 25.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if(amount.contains(Regex("[+\\/*-]\\d+"))) "%.2f".format(equationResult) else "",
+                            text = if (amount.contains(Regex("[+\\/*-]\\d+"))) "%.2f".format(
+                                equationResult
+                            ) else "",
                             fontSize = 14.sp,
                         )
                     }
@@ -244,12 +238,11 @@ fun AddExpenseBottomSheet(
                 NumberKeyboard(
                     modifier = Modifier.fillMaxWidth(),
                     onOperatorClick = { operator ->
-                        if(amount.isDoubleTwoDigitsOrEquation() && amount.contains(Regex("[+\\/*-]\\d+"))) {
+                        if (amount.isDoubleTwoDigitsOrEquation() && amount.contains(Regex("[+\\/*-]\\d+"))) {
                             amount = evaluate(amount).toString()
-//                            equationResult = 0.0
                         }
                         val newText = amount + operator
-                        if(newText.isDoubleTwoDigitsOrEquation()) {
+                        if (newText.isDoubleTwoDigitsOrEquation()) {
                             amount = newText
                             enableSave = false
                         }
@@ -282,7 +275,7 @@ fun AddExpenseBottomSheet(
                             amount = equationResult,
                             currency = currency,
                             note = note,
-                            datetime = datetime.toString(),
+                            datetime = datetime,
                             categoryId = category.id,
                             tripId = currentTripId
                         )
@@ -330,7 +323,7 @@ fun AddExpenseBottomSheet(
 fun String.safeSubstring(start: Int, end: Int): String {
     return try {
         this.substring(start, end)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         "0.00"
     }
 }
@@ -460,7 +453,8 @@ fun NumberKeyboard(
                         "backspace" -> KeyboardButton(
                             icon = painterResource(drawable.materialsymbols_ic_arrow_left_alt_outlined),
                             onClick = onBackspaceClick,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f),
                             containerColor = MaterialTheme.colorScheme.primary
                         )
 
@@ -488,19 +482,20 @@ fun NumberKeyboard(
 
 @Composable
 fun KeyboardButton(
+    modifier: Modifier = Modifier,
     text: String? = null,
     icon: Painter? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
+
     Button(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
         modifier = modifier
-            .padding(4.dp)
+            .padding(2.dp)
             .aspectRatio(2.5f),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
@@ -545,7 +540,12 @@ fun PreviewAddExpenseDisabled() {
             onDismiss = {},
             expenseDtoToEdit = null,
             state = sheetState,
-            currentTrip = Trip(1, "Trip", "2020-01-01", Currencies.entries.random().name),
+            currentTrip = Trip(
+                1,
+                "Trip",
+                LocalDate.parse("2020-01-01"),
+                Currencies.entries.random().name
+            ),
             categories = categoriesToPreview
         )
     }
@@ -572,13 +572,20 @@ fun PreviewAddExpenseEnabled() {
                     amount = 10.31,
                     currency = "PLN",
                     note = "some note",
-                    datetime = "2025-11-30T10:16:26.939",
+                    datetime = LocalDateTime.now(),
                     categoryId = 1,
                     tripId = 1
-                ), category = categoriesToPreview.get(0), Trip(1, "Włochy", "2025-01-02", "PLN")
+                ),
+                category = categoriesToPreview[0],
+                Trip(1, "Włochy", LocalDate.parse("2025-01-02"), "PLN")
             ),
             state = sheetState,
-            currentTrip = Trip(1, "Trip", "2020-01-01", Currencies.entries.random().name),
+            currentTrip = Trip(
+                1,
+                "Trip",
+                LocalDate.parse("2020-01-01"),
+                Currencies.entries.random().name
+            ),
             categories = categoriesToPreview
         )
     }

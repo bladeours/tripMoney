@@ -19,7 +19,7 @@ interface ExpenseDao {
     @Query(
         """
         SELECT * FROM expense WHERE trip_id = :tripId
-        ORDER BY DATETIME(expense.datetime) DESC
+        ORDER BY expense.datetime DESC
     """
     )
     fun expenseDtoPaged(tripId: Int): PagingSource<Int, ExpenseDto>
@@ -28,33 +28,11 @@ interface ExpenseDao {
     @Query(
     """
         SELECT * FROM expense WHERE trip_id = :tripId
-        ORDER BY DATETIME(expense.datetime) DESC
+        ORDER BY expense.datetime DESC
     """
     )
     fun expenseDto(tripId: Int): Flow<List<ExpenseDto>>
 
     @Delete
     suspend fun delete(expense: Expense)
-
-    @Query(
-        """
-    SELECT
-        c.id as categoryId,
-        c.name as categoryName,
-        c.icon as icon,
-        c.color as color,
-        SUM(e.amount) as amount,
-        e.currency as currency
-    FROM
-        expense e
-    JOIN
-        category c ON e.category_id = c.id
-    WHERE
-        e.trip_id = :tripId
-    GROUP BY
-        c.id, c.name, c.icon, c.color, e.currency
-    """
-    )
-    fun summaryPerCategoryRaw(tripId: Int): Flow<List<SummaryPerCategoryRaw>>
-
 }

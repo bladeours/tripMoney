@@ -25,6 +25,7 @@ class ExchangeRateRepository @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun getRate(base: Currencies, target: Currencies, date: LocalDate): Double {
+        if(base == target) return 1.0
         val id = ExchangeRate.buildKey(base.name, target.name, date.toString())
         val cachedRate = exchangeRateDao.getById(id)
         return if (cachedRate != null) {

@@ -50,7 +50,7 @@ fun StatisticsScreen() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
-    val currentTrip = tripViewModel.getTrip(currentTripId)
+    val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
     val summaryPerCategoryList by expenseAndCategoryViewModel.getSummaryPerCategory(currentTripId)
         .collectAsState(emptyList())
     val summaryAmount by expenseAndCategoryViewModel.getSummaryAmount(currentTripId)

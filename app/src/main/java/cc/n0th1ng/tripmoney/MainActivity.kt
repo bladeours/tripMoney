@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.navigation.BottomNavigation
 import cc.n0th1ng.tripmoney.navigation.CustomNavigationDrawer
 import cc.n0th1ng.tripmoney.navigation.Screens
@@ -59,7 +60,7 @@ fun NavigationDrawer() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
-    val currentTrip = tripViewModel.getTrip(currentTripId)
+    val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
     val navController = rememberNavController()
     val navBackStack by navController.currentBackStackEntryAsState()
     val current = navBackStack?.destination?.route

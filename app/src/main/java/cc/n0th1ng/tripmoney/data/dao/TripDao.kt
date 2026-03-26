@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 import cc.n0th1ng.tripmoney.data.entity.Trip
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TripDao {
@@ -27,5 +28,5 @@ interface TripDao {
     @Query(
         "SELECT * FROM trip where trip.id = :tripId"
     )
-    fun trip(tripId: Int): Trip?
+    fun trip(tripId: Int): Flow<Trip?>
 }

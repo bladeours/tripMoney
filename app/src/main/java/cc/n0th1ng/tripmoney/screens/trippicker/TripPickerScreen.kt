@@ -206,7 +206,7 @@ fun TripCard(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(fontSize = 25.sp, fontWeight = FontWeight.SemiBold, text = trip.name)
-                Text(trip.startDate)
+                Text(trip.startDate.toString())
             }
             Text(
                 trip.currency.uppercase(),

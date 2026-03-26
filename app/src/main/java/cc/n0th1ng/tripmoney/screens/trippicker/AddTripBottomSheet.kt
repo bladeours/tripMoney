@@ -94,7 +94,7 @@ fun AddTripBottomSheet(
     var name by remember { mutableStateOf(tripToEdit?.name ?: "") }
     var startDate by remember {
         mutableStateOf(
-            LocalDate.parse(tripToEdit?.startDate ?: LocalDate.now().toString())
+            tripToEdit?.startDate ?: LocalDate.now()
         )
     }
 
@@ -157,7 +157,7 @@ fun AddTripBottomSheet(
                 shape = MaterialTheme.shapes.medium,
                 onClick = {
                     val trip =
-                        Trip(name = name, startDate = startDate.toString(), currency = currency)
+                        Trip(name = name, startDate = startDate, currency = currency)
 
                     onSave(if (tripToEdit == null) trip else trip.copy(id = tripToEdit.id))
                 }) {
@@ -231,7 +231,7 @@ fun PreviewAddTripBottomSheetEditTrip() {
         AddTripBottomSheet(
             {},
             {},
-            Trip(1, "Włochy", "2025-01-02", "PLN"),
+            Trip(1, "Włochy", LocalDate.parse("2025-01-02"), "PLN"),
             sheetState,
             defaultCurrency = Currencies.entries.random()
         )

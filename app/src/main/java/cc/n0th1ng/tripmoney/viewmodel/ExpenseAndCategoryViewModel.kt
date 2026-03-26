@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
 import androidx.paging.map
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
+import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.data.repository.CategoryRepository
 import cc.n0th1ng.tripmoney.data.repository.ExchangeRateRepository
 import cc.n0th1ng.tripmoney.data.repository.ExpenseRepository
@@ -18,15 +20,16 @@ import cc.n0th1ng.tripmoney.data.repository.TripRepository
 import cc.n0th1ng.tripmoney.utils.Currencies
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
 import java.io.File
-import java.time.LocalDateTime
+import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.collections.mapValues
 
 
 @HiltViewModel
@@ -37,14 +40,62 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     private val tripRepo: TripRepository
 ) : ViewModel() {
 
-    fun getExpenses(tripId: Int): Flow<PagingData<ExpenseDto>> =
-        expenseRepo.getExpensesPaged(tripId).cachedIn(viewModelScope)
+    fun getExpensesDtoPaged(tripId: Int): Flow<PagingData<ExpenseDto>> =
+        expenseRepo.getExpensesDtoPaged(tripId).cachedIn(viewModelScope)
 
-    fun save(expense: Expense) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getExpensesWithHeadersPaged(
+        tripId: Int
+    ): Flow<PagingData<ExpenseListItemUi>> {
+        val pagingFlow = getExpensesDtoPaged(tripId)
+        val sumsFlow = getDailySums(tripId)
+        val tripFlow = tripRepo.getTrip(tripId)
+        return combine(pagingFlow, sumsFlow, tripFlow) { pagingData, sums, trip ->
+            val currency = trip?.currency ?: ""
+            pagingData
+                .map<ExpenseDto, ExpenseListItemUi> {
+                    ExpenseListItemUi.Item(it)
+                }
+                .insertSeparators { before, after ->
+                    if (after == null) return@insertSeparators null
+                    val afterItem = after as ExpenseListItemUi.Item
+                    val afterDate = afterItem.expenseDto.expense.datetime.toLocalDate()
+                    val beforeDate = (before as? ExpenseListItemUi.Item)
+                        ?.expenseDto
+                        ?.expense
+                        ?.datetime
+                        ?.toLocalDate()
+
+                    if (before == null || beforeDate != afterDate) {
+                        ExpenseListItemUi.Header(
+                            date = afterDate,
+                            sum = sums[afterDate] ?: 0.0,
+                            currency = currency
+                        )
+                    } else {
+                        null
+                    }
+                }
+
+        }.cachedIn(viewModelScope)
+    }
+
+    fun getExpensesDto(tripId: Int): Flow<List<ExpenseDto>> =
+        expenseRepo.getExpensesDto(tripId)
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun save(expense: Expense, trip: Trip) {
         viewModelScope.launch {
-            expenseRepo.save(expense)
+            val rate = exchangeRateRepository.getRate(
+                Currencies.valueOf(expense.currency),
+                Currencies.valueOf(trip.currency),
+                expense.datetime.toLocalDate()
+            )
+            expenseRepo.save(expense.copy(rate = rate))
         }
     }
+
+
 
     fun delete(expense: Expense) {
         viewModelScope.launch {
@@ -67,7 +118,7 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
                 writer,
                 CSVFormat.DEFAULT.withHeader("date", "category", "currency", "amount")
             ).use { printer ->
-                expenseRepo.getExpenses(tripId).first().forEach { expenseDto ->
+                expenseRepo.getExpensesDto(tripId).first().forEach { expenseDto ->
                     printer.printRecord(
                         expenseDto.expense.datetime,
                         expenseDto.category.name,
@@ -80,68 +131,45 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDailySums(tripId: Int): Flow<Map<LocalDate, Double>> {
+        return getExpensesDto(tripId)
+            .map { expenses ->
+                expenses.groupBy { it.expense.datetime.toLocalDate() }
+                    .mapValues { (_, list) ->
+                        list.sumOf { it.expense.amount * it.expense.rate }
+                    }
+            }
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getSummaryAmount(tripId: Int): Flow<Double> {
-        return getExpensesWithConvertedAmounts(tripId).map { list ->
-            list.sumOf { it.convertedAmount }
+        return getExpensesDto(tripId).map { list ->
+            list.sumOf { it.expense.amount * it.expense.rate }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getSummaryPerCategory(tripId: Int): Flow<List<SummaryPerCategory>> {
-        val tripCurrency = tripRepo.getTrip(tripId)?.currency ?: Currencies.default().name
-        return getExpensesWithConvertedAmounts(tripId)
-            .map { list ->
-                val sumOfAll = list.sumOf { it.convertedAmount }
-                list.groupBy { it.expenseDto.category }
-                    .map { (category, expenses) ->
-                        val total = expenses.sumOf { it.convertedAmount }
-                        SummaryPerCategory(
-                            category = category,
-                            amount = total,
-                            percent = (total / sumOfAll).toFloat(),
-                            currency = Currencies.valueOf(tripCurrency)
-                        )
-                    }.sortedBy { it.percent }.reversed()
-            }
-    }
+        val tripFlow = tripRepo.getTrip(tripId)
+        val expensesFlow = getExpensesDto(tripId)
 
+        return tripFlow.combine(expensesFlow) { trip, expenses ->
+            val tripCurrency = trip?.currency ?: Currencies.default().name
+            val sumOfAll = expenses.sumOf { it.expense.convertedAmount() }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun getExpensesWithConvertedAmounts(tripId: Int): Flow<List<ExpenseDtoWithConvertedAmount>> {
-        return expenseRepo.getExpenses(tripId)
-            .map { list ->
-                list.map { expenseDto ->
-                    val convertedAmount =
-                        if (expenseDto.expense.currency != expenseDto.trip.currency) {
-                            runBlocking {
-                                expenseDto.convertedAmount()
-                            }
-                        } else {
-                            expenseDto.expense.amount
-                        }
-                    ExpenseDtoWithConvertedAmount(expenseDto, convertedAmount)
+            expenses.groupBy { it.category }
+                .map { (category, expensesForCategory) ->
+                    val total = expensesForCategory.sumOf { it.expense.convertedAmount() }
+                    SummaryPerCategory(
+                        category = category,
+                        amount = total,
+                        percent = (total / sumOfAll).toFloat(),
+                        currency = Currencies.valueOf(tripCurrency)
+                    )
                 }
-            }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun getExpensesWithConvertedAmountsPaged(tripId: Int): Flow<PagingData<ExpenseDtoWithConvertedAmount>> {
-        return expenseRepo.getExpensesPaged(tripId)
-            .map { pagingData ->
-                pagingData.map { expenseDto ->
-                    val convertedAmount =
-                        if (expenseDto.expense.currency != expenseDto.trip.currency) {
-                            runBlocking {
-                                expenseDto.convertedAmount()
-                            }
-                        } else {
-                            expenseDto.expense.amount
-                        }
-                    ExpenseDtoWithConvertedAmount(expenseDto, convertedAmount)
-                }
-            }
+                .sortedByDescending { it.percent }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -152,16 +180,9 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun ExpenseDto.convertedAmount(): Double {
-        return exchangeRateRepository.getRate(
-            Currencies.valueOf(this.expense.currency),
-            Currencies.valueOf(this.trip.currency),
-            LocalDateTime.parse(this.expense.datetime).toLocalDate()
-        ) * this.expense.amount
+    sealed class ExpenseListItemUi {
+        data class Item(val expenseDto: ExpenseDto) : ExpenseListItemUi()
+        data class Header(val date: LocalDate, val sum: Double, val currency: String) : ExpenseListItemUi()
     }
-
-    data class ExpenseDtoWithConvertedAmount(
-        val expenseDto: ExpenseDto,
-        val convertedAmount: Double
-    )
 }
+

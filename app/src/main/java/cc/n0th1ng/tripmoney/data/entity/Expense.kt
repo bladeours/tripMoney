@@ -5,6 +5,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import java.time.LocalDateTime
 
 @Entity(tableName = "expense")
 data class Expense(
@@ -12,10 +13,15 @@ data class Expense(
     @ColumnInfo("amount") val amount: Double,
     @ColumnInfo("currency") val currency: String,
     @ColumnInfo("note") val note: String,
-    @ColumnInfo("datetime") val datetime: String,
+    @ColumnInfo("datetime") val datetime: LocalDateTime,
     @ColumnInfo("category_id") val categoryId: Int,
-    @ColumnInfo("trip_id") val tripId: Int
-)
+    @ColumnInfo("trip_id") val tripId: Int,
+    @ColumnInfo("rate") val rate: Double = 1.0
+) {
+    fun convertedAmount(): Double {
+        return this.amount * this.rate
+    }
+}
 
 data class ExpenseDto(
     @Embedded val expense: Expense,

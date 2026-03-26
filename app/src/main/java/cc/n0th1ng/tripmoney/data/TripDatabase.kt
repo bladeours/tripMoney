@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cc.n0th1ng.tripmoney.data.dao.CategoryDao
 import cc.n0th1ng.tripmoney.data.dao.ExchangeRateDao
@@ -17,6 +18,7 @@ import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.utils.Icons
 import cc.n0th1ng.tripmoney.utils.colors
+import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,11 +27,13 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Database(entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class], version = 1)
+@TypeConverters(Converters::class)
 abstract class TripDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun expenseDao(): ExpenseDao
@@ -46,7 +50,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideTripDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+//        expenseAndCategoryViewModel: ExpenseAndCategoryViewModel
     ): TripDatabase {
 
         val db: TripDatabase = Room.inMemoryDatabaseBuilder(
@@ -94,9 +99,9 @@ private class DatabasePrepopulator(
 ) {
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun prepopulate() {
-        tripDao.insert(Trip(name = "Włochy", startDate = "2026-03-01", currency = "PLN"))
-        tripDao.insert(Trip(name = "Szwajcaria", startDate = "2025-03-01", currency = "EUR"))
-        tripDao.insert(Trip(name = "Portugalia", startDate = "2025-03-01", currency = "USD"))
+        tripDao.insert(Trip(name = "Włochy", startDate = LocalDate.parse("2026-03-01"), currency = "PLN"))
+        tripDao.insert(Trip(name = "Szwajcaria", startDate =LocalDate.parse("2025-03-01"), currency = "EUR"))
+        tripDao.insert(Trip(name = "Portugalia", startDate = LocalDate.parse("2025-03-01"), currency = "USD"))
         categoryDao.insert(Category(name = "Accomodation", icon = Icons.HOTEL, color = colors.random()))
         categoryDao.insert(Category(name = "Transport", icon = Icons.TRANSPORT, color = colors.random()))
         categoryDao.insert(Category(name = "Flight", icon = Icons.FLIGHT, color = colors.random()))
@@ -113,7 +118,7 @@ private class DatabasePrepopulator(
                 amount = 120.50,
                 currency = "PLN",
                 note = "Hotel overnight",
-                datetime = now.minusDays(10).toString(),
+                datetime = now.minusDays(10),
                 categoryId = 1,
                 tripId = 1
             )
@@ -123,7 +128,7 @@ private class DatabasePrepopulator(
                 amount = 45.75,
                 currency = "PLN",
                 note = "Dinner",
-                datetime = now.minusDays(9).toString(),
+                datetime = now.minusDays(9),
                 categoryId = 2,
                 tripId = 1
             )
@@ -133,7 +138,7 @@ private class DatabasePrepopulator(
                 amount = 15.20,
                 currency = "PLN",
                 note = "Bus ticket",
-                datetime = now.minusDays(8).toString(),
+                datetime = now.minusDays(8),
                 categoryId = 3,
                 tripId = 1
             )
@@ -143,7 +148,7 @@ private class DatabasePrepopulator(
                 amount = 89.99,
                 currency = "PLN",
                 note = "Concert tickets",
-                datetime = now.minusDays(7).toString(),
+                datetime = now.minusDays(7),
                 categoryId = 4,
                 tripId = 1
             )
@@ -153,7 +158,7 @@ private class DatabasePrepopulator(
                 amount = 32.50,
                 currency = "PLN",
                 note = "Souvenirs",
-                datetime = now.minusDays(6).toString(),
+                datetime = now.minusDays(6),
                 categoryId = 5,
                 tripId = 1
             )
@@ -163,7 +168,7 @@ private class DatabasePrepopulator(
                 amount = 180.00,
                 currency = "PLN",
                 note = "Hotel 3 nights",
-                datetime = now.minusDays(5).toString(),
+                datetime = now.minusDays(5),
                 categoryId = 1,
                 tripId = 1
             )
@@ -173,7 +178,7 @@ private class DatabasePrepopulator(
                 amount = 67.30,
                 currency = "PLN",
                 note = "Lunch",
-                datetime = now.minusDays(4).toString(),
+                datetime = now.minusDays(4),
                 categoryId = 2,
                 tripId = 1
             )
@@ -183,7 +188,7 @@ private class DatabasePrepopulator(
                 amount = 22.00,
                 currency = "PLN",
                 note = "Train ticket",
-                datetime = now.minusDays(3).toString(),
+                datetime = now.minusDays(3),
                 categoryId = 3,
                 tripId = 1
             )
@@ -193,7 +198,7 @@ private class DatabasePrepopulator(
                 amount = 55.00,
                 currency = "PLN",
                 note = "Museum entry",
-                datetime = now.minusDays(2).toString(),
+                datetime = now.minusDays(2),
                 categoryId = 4,
                 tripId = 1
             )
@@ -203,7 +208,7 @@ private class DatabasePrepopulator(
                 amount = 12.99,
                 currency = "PLN",
                 note = "Snacks",
-                datetime = now.minusDays(1).toString(),
+                datetime = now.minusDays(1),
                 categoryId = 2,
                 tripId = 1
             )
@@ -213,7 +218,7 @@ private class DatabasePrepopulator(
                 amount = 210.00,
                 currency = "PLN",
                 note = "Hotel 5 nights",
-                datetime = now.toString(),
+                datetime = now,
                 categoryId = 1,
                 tripId = 1
             )
@@ -223,7 +228,7 @@ private class DatabasePrepopulator(
                 amount = 95.50,
                 currency = "EUR",
                 note = "Dinner for two",
-                datetime = now.minusHours(12).toString(),
+                datetime = now.minusHours(12),
                 categoryId = 2,
                 tripId = 1
             )
@@ -233,7 +238,7 @@ private class DatabasePrepopulator(
                 amount = 30.00,
                 currency = "EUR",
                 note = "Taxi",
-                datetime = now.minusHours(6).toString(),
+                datetime = now.minusHours(6),
                 categoryId = 3,
                 tripId = 1
             )
@@ -243,7 +248,7 @@ private class DatabasePrepopulator(
                 amount = 40.00,
                 currency = "USD",
                 note = "Gifts",
-                datetime = now.minusHours(3).toString(),
+                datetime = now.minusHours(3),
                 categoryId = 5,
                 tripId = 1
             )
@@ -253,7 +258,7 @@ private class DatabasePrepopulator(
                 amount = 75.00,
                 currency = "PLN",
                 note = "Sightseeing tour",
-                datetime = now.minusHours(1).toString(),
+                datetime = now.minusHours(1),
                 categoryId = 4,
                 tripId = 1
             )
