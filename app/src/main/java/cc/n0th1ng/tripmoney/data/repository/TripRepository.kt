@@ -9,7 +9,10 @@ import androidx.paging.PagingData
 import cc.n0th1ng.tripmoney.data.dao.TripDao
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class TripRepository @Inject constructor(
@@ -18,9 +21,7 @@ class TripRepository @Inject constructor(
 ) {
 
     @RequiresApi(Build.VERSION_CODES.O)
-    @WorkerThread
     suspend fun save(trip: Trip) {
-        expenseRepository.recalculateTripExpenses(trip.id)
         tripDao.insert(trip)
     }
 

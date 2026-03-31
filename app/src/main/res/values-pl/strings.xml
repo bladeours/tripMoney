@@ -5,7 +5,7 @@
     <string name="save">Zapisz</string>
     <string name="backspace">Usuń</string>
     <string name="pick_category">Wybierz kategorie</string>
-    <string name="add_new_category">dodaj nową</string>
+    <string name="add_new">dodaj nową</string>
     <string name="pick_currency">Wybierz kategorie</string>
     <string name="cancel">Anuluj</string>
     <string name="add_expense">Dodaj wydatek</string>
@@ -27,4 +27,9 @@
     <string name="list_of_expenses">Lista wydatków</string>
     <string name="statistics">Statystyki</string>
     <string name="export_to_csv">Eksport do CSV</string>
+    <string name="manage_categories">Zarządzaj kategoriami</string>
+    <string name="categories">Kategorie</string>
+    <string name="export_csv_subttext">Zapisz wydatki  z %s do pliku</string>
+    <string name="add_new_category">Dodaj kategorie</string>
+    <string name="edit_category">Edytuj kategorie</string>
 </resources>

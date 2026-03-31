@@ -28,7 +28,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.R.*
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.screens.AddCategoryDialog
-import cc.n0th1ng.tripmoney.utils.Icons
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import com.composables.icons.materialsymbols.outlined.R
 
@@ -37,7 +36,7 @@ fun CategorySelectionDialog(
     onDismiss: () -> Unit,
     onCategorySelected: (Category) -> Unit,
     selected: Category,
-    categories: List<Category>
+    categories: List<Category>,
 ) {
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val listState = rememberLazyListState()
@@ -91,7 +90,7 @@ fun CategorySelectionDialog(
                         contentDescription = stringResource(string.category)
                     )
                     Text(
-                        text = stringResource(string.add_new_category), modifier = Modifier.padding(start = 8.dp),
+                        text = stringResource(string.add_new), modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }

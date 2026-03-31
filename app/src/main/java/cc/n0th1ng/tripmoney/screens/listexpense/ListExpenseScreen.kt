@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -47,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,33 +58,46 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import cc.n0th1ng.tripmoney.R.string
+import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.screens.addexpense.AddExpenseBottomSheet
+import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.utils.AllPreviews
+import cc.n0th1ng.tripmoney.utils.Currencies
+import cc.n0th1ng.tripmoney.utils.colors
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel.ExpenseListItemUi
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlin.random.Random
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ListExpenseScreen() {
+fun ListExpenseScreen(filter: String) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
     val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
-    val expensesFlow = expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId)
+    val expensesFlow =
+        expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId, filter)
+    val isRecalculatingRate by tripViewModel.isRecalculating.collectAsState()
 
     ListExpenseScreen(
         expensesFlow = expensesFlow,
         onSaveExpense = { expenseAndCategoryViewModel.save(it, currentTrip!!) },
         onDeleteExpense = { expenseAndCategoryViewModel.delete(it) },
+        isRecalculatingRate = isRecalculatingRate
     )
 }
 
@@ -94,7 +107,8 @@ fun ListExpenseScreen() {
 @Composable
 fun ListExpenseScreen(
     expensesFlow: Flow<PagingData<ExpenseListItemUi>>,
-    onSaveExpense: (Expense) -> Unit, onDeleteExpense: (Expense) -> Unit
+    onSaveExpense: (Expense) -> Unit, onDeleteExpense: (Expense) -> Unit,
+    isRecalculatingRate: Boolean
 ) {
 
     val items = expensesFlow.collectAsLazyPagingItems()
@@ -111,58 +125,52 @@ fun ListExpenseScreen(
         )
     })
     {
-        if (items.loadState.refresh == LoadState.Loading) {
-            // Show loading indicator
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-            else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    state = listState
-                ) {
-                    items(
-                        count = items.itemCount,
-                        key = items.itemKey { item ->
-                            when (item) {
-                                is ExpenseListItemUi.Item -> item.expenseDto.expense.id
-                                is ExpenseListItemUi.Header -> "header_${item.date}"
-                            }
+        Box {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                state = listState
+            ) {
+                items(
+                    count = items.itemCount,
+                    key = items.itemKey { item ->
+                        when (item) {
+                            is ExpenseListItemUi.Item -> item.expenseDto.expense.id
+                            is ExpenseListItemUi.Header -> "header_${item.date}"
                         }
-                    ) { index ->
+                    }
+                ) { index ->
 
-                        when (val item = items[index]) {
+                    when (val item = items[index]) {
 
-                            is ExpenseListItemUi.Header -> {
-                                CustomDivider(
-                                    date = item.date,
-                                    sum = item.sum,
-                                    currency = item.currency
-                                )
-                            }
-
-                            is ExpenseListItemUi.Item -> {
-                                SwipeToDeleteExpenseCard(
-                                    expenseDto = item.expenseDto,
-                                    onDelete = { expense -> itemToDelete = expense },
-                                    onClick = { expenseDto ->
-                                        expenseDtoToEdit = expenseDto
-                                        showBottomSheet = true
-                                    }
-                                )
-                            }
-
-                            null -> {}
-
+                        is ExpenseListItemUi.Header -> {
+                            CustomDivider(
+                                date = item.date,
+                                sum = item.sum,
+                                currency = item.currency
+                            )
                         }
-                        Spacer(Modifier.height(10.dp))
+
+                        is ExpenseListItemUi.Item -> {
+                            SwipeToDeleteExpenseCard(
+                                expenseDto = item.expenseDto,
+                                onDelete = { expense -> itemToDelete = expense },
+                                onClick = { expenseDto ->
+                                    expenseDtoToEdit = expenseDto
+                                    showBottomSheet = true
+                                }
+                            )
+                        }
+
+                        null -> {}
 
                     }
+                    Spacer(Modifier.height(10.dp))
 
                 }
+
             }
+        }
 
         if (itemToDelete != null) {
             DeleteConfirmationDialog(
@@ -208,7 +216,7 @@ fun CustomDivider(date: LocalDate, sum: Double, currency: String) {
             date.format(
                 DateTimeFormatter.ofPattern("dd EEEE")
             ).toString(),
-            modifier = Modifier.background(Color.White.copy(alpha = 0f)),
+            modifier = Modifier.padding(horizontal = 5.dp).background(Color.White.copy(alpha = 0f)),
             style = MaterialTheme.typography.titleMedium
         )
         Row(
@@ -221,8 +229,14 @@ fun CustomDivider(date: LocalDate, sum: Double, currency: String) {
             HorizontalDivider(modifier = Modifier.weight(2f))
             Text(
                 "%.2f %s".format(sum, currency),
-                modifier = Modifier.background(Color.White.copy(alpha = 0f)),
-                style = MaterialTheme.typography.bodyMedium
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = MaterialTheme.shapes.small
+                    )
+                    .padding(5.dp),
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                style = MaterialTheme.typography.bodySmall
             )
             HorizontalDivider(modifier = Modifier.weight(1f))
         }
@@ -256,7 +270,7 @@ fun SwipeToDeleteExpenseCard(
                 Modifier
                     .clip(CardDefaults.elevatedShape)
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.onError)
+                    .background(MaterialTheme.colorScheme.errorContainer)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
@@ -329,7 +343,7 @@ fun ExpenseCard(
 ) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors()
-            .copy(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier
             .fillMaxWidth(0.9f)
             .height(70.dp)
@@ -344,14 +358,29 @@ fun ExpenseCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxSize()
+                //TODO
+//                .background(
+//                    Brush.horizontalGradient(
+//                        colorStops = arrayOf(
+//                            1f to Color(expenseDto.category.color.toColorInt()),
+//                            4f to MaterialTheme.colorScheme.surfaceDim
+//                        )
+//                    )
+//                )
                 .padding(horizontal = 16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(15.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxHeight()
             ) {
                 Icon(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceDim,
+                            shape = MaterialTheme.shapes.small
+                        )
+                        .padding(10.dp),
                     painter = painterResource(expenseDto.category.icon.resource),
                     contentDescription = "Category",
                     tint = Color(expenseDto.category.color.toColorInt())
@@ -367,13 +396,13 @@ fun ExpenseCard(
                         Text(
                             text = expenseDto.category.name,
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             modifier = Modifier.padding(0.dp),
                             text = expenseDto.expense.note,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
@@ -382,7 +411,7 @@ fun ExpenseCard(
                             DateTimeFormatter.ofPattern("dd MMM HH:mm")
                         ),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -390,7 +419,7 @@ fun ExpenseCard(
                 Text(
                     text = "- %.2f ${expenseDto.expense.currency}".format(expenseDto.expense.amount),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSurface
 
 
                 )
@@ -398,7 +427,7 @@ fun ExpenseCard(
                     Text(
                         text = "≈ %.2f ${expenseDto.trip.currency}".format(expenseDto.expense.convertedAmount()),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -407,107 +436,125 @@ fun ExpenseCard(
     }
 }
 
-//@RequiresApi(Build.VERSION_CODES.O)
-//@AllPreviews
-//@Composable
-//fun PreviewListExpenseScreen() {
-//    TripMoneyTheme() {
-//        val pagingData = PagingData.from(sampleExpenseDtoWithConvertedAmountList())
-//        ListExpenseScreen(
-//            expensesDtoFlow = MutableStateFlow(pagingData),
-//            onSaveExpense = {},
-//            onDeleteExpense = {},
-//            dailySums = emptyMap()
-//        )
-//
-//    }
-//}
-//
-//@AllPreviews
-//@Composable
-//fun PreviewDeleteConfirmationDialog() {
-//    TripMoneyTheme() {
-//        DeleteConfirmationDialog(
-//            onConfirm = {},
-//            onCancel = {})
-//    }
-//}
-//
-//
-//@RequiresApi(Build.VERSION_CODES.O)
-//private fun sampleExpenseDtoWithConvertedAmountList(): List<ExpenseDto> {
-//    val sampleCategories = listOf(
-//        Category(
-//            name = "Hotel",
-//            icon = cc.n0th1ng.tripmoney.utils.Icons.HOTEL,
-//            color = colors.random()
-//        ),
-//        Category(
-//            name = "Jedzenie",
-//            icon = cc.n0th1ng.tripmoney.utils.Icons.RESTAURANT,
-//            color = colors.random()
-//        ),
-//        Category(
-//            name = "Transport",
-//            icon = cc.n0th1ng.tripmoney.utils.Icons.FLIGHT,
-//            color = colors.random()
-//        ),
-//        Category(
-//            name = "Rozrywka",
-//            icon = cc.n0th1ng.tripmoney.utils.Icons.ATTRACTION,
-//            color = colors.random()
-//        ),
-//        Category(
-//            name = "Zakupy",
-//            icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
-//            color = colors.random()
-//        ),
-//    )
-//
-//    val trip = Trip(
-//        id = 1,
-//        name = "Vacation",
-//        currency = "USD",
-//        startDate = LocalDate.parse("2026-01-01")
-//    )
-//
-//    val startLong = LocalDateTime.now().minusDays(10).toEpochMilli()
-//    val endLong = LocalDateTime.now().toEpochMilli()
-//
-//    val result: MutableList<ExpenseDto> = mutableListOf()
-//    for (i in 0..15) {
-//        val category = sampleCategories.random()
-//        val datetime = if (i > 4) {
-//            LocalDateTime.ofEpochSecond(
-//                Random.nextLong(startLong, endLong),
-//                0,
-//                ZoneOffset.UTC
-//            )
-//        } else LocalDateTime.now()
-//
-//        val expense = Expense(
-//            id = i,
-//            categoryId = category.id,
-//            tripId = 1,
-//            amount = Random.nextDouble(0.1, 300.0),
-//            currency = Currencies.entries.random().name,
-//            note = if (i % 3 == 0) "Some note" else "",
-//            datetime = datetime,
-//            rate = if (Random.nextBoolean()) Random.nextDouble(
-//                0.1,
-//                5.0
-//            ) else 1.0
-//        )
-//
-//
-//        val expenseDto = ExpenseDto(
-//            expense = expense,
-//            category = category,
-//            trip = trip
-//        )
-//        result.add(
-//            expenseDto
-//        )
-//    }
-//    return result
-//}
+@RequiresApi(Build.VERSION_CODES.O)
+@AllPreviews
+@Composable
+fun PreviewListExpenseScreen() {
+    TripMoneyTheme() {
+        val pagingData = PagingData.from(sampleExpenseDtoWithConvertedAmountList())
+        ListExpenseScreen(
+            expensesFlow = MutableStateFlow(pagingData),
+            onSaveExpense = {},
+            onDeleteExpense = {},
+            true
+        )
+
+    }
+}
+
+@AllPreviews
+@Composable
+fun PreviewDeleteConfirmationDialog() {
+    TripMoneyTheme() {
+        DeleteConfirmationDialog(
+            onConfirm = {},
+            onCancel = {})
+    }
+}
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun sampleExpenseDtoWithConvertedAmountList(): List<ExpenseListItemUi> {
+    val sampleCategories = listOf(
+        Category(
+            name = "Hotel",
+            icon = cc.n0th1ng.tripmoney.utils.Icons.HOTEL,
+            color = colors.random()
+        ),
+        Category(
+            name = "Jedzenie",
+            icon = cc.n0th1ng.tripmoney.utils.Icons.RESTAURANT,
+            color = colors.random()
+        ),
+        Category(
+            name = "Transport",
+            icon = cc.n0th1ng.tripmoney.utils.Icons.FLIGHT,
+            color = colors.random()
+        ),
+        Category(
+            name = "Rozrywka",
+            icon = cc.n0th1ng.tripmoney.utils.Icons.ATTRACTION,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy",
+            icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
+            color = colors.random()
+        ),
+    )
+
+    val trip = Trip(
+        id = 1,
+        name = "Vacation",
+        currency = "USD",
+        startDate = LocalDate.parse("2026-01-01")
+    )
+
+    val startLong = LocalDateTime.now().minusDays(10).toEpochMilli()
+    val endLong = LocalDateTime.now().toEpochMilli()
+
+    val result: MutableList<ExpenseListItemUi> = mutableListOf()
+    result.add(
+        ExpenseListItemUi.Header(
+            LocalDateTime.ofEpochSecond(
+                Random.nextLong(startLong, endLong),
+                0,
+                ZoneOffset.UTC
+            ).toLocalDate(), Random.nextDouble(0.1, 300.0), Currencies.entries.random().name
+        )
+    )
+    for (i in 0..15) {
+        val category = sampleCategories.random()
+        val datetime = if (i > 4) {
+            LocalDateTime.ofEpochSecond(
+                Random.nextLong(startLong, endLong),
+                0,
+                ZoneOffset.UTC
+            )
+        } else LocalDateTime.now()
+
+        val expense = Expense(
+            id = i,
+            categoryId = category.id,
+            tripId = 1,
+            amount = Random.nextDouble(0.1, 300.0),
+            currency = Currencies.entries.random().name,
+            note = if (i % 3 == 0) "Some note" else "",
+            datetime = datetime,
+            rate = if (Random.nextBoolean()) Random.nextDouble(
+                0.1,
+                5.0
+            ) else 1.0
+        )
+
+
+        val expenseDto = ExpenseDto(
+            expense = expense,
+            category = category,
+            trip = trip
+        )
+        result.add(
+            ExpenseListItemUi.Item(expenseDto)
+        )
+        if (i % 5 == 0) {
+            result.add(
+                ExpenseListItemUi.Header(
+                    datetime.toLocalDate(),
+                    Random.nextDouble(0.1, 300.0),
+                    Currencies.entries.random().name
+                )
+            )
+        }
+    }
+    return result
+}

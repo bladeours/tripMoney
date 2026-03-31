@@ -40,15 +40,28 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     private val tripRepo: TripRepository
 ) : ViewModel() {
 
-    fun getExpensesDtoPaged(tripId: Int): Flow<PagingData<ExpenseDto>> =
-        expenseRepo.getExpensesDtoPaged(tripId).cachedIn(viewModelScope)
+    fun archiveCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepo.save(category.copy(archived = true))
+        }
+    }
+
+    fun deArchiveCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepo.save(category.copy(archived = false))
+        }
+    }
+
+    fun getExpensesDtoPaged(tripId: Int, filter: String = ""): Flow<PagingData<ExpenseDto>> =
+        expenseRepo.getExpensesDtoPaged(tripId, filter).cachedIn(viewModelScope)
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getExpensesWithHeadersPaged(
-        tripId: Int
+        tripId: Int,
+        filter: String = ""
     ): Flow<PagingData<ExpenseListItemUi>> {
-        val pagingFlow = getExpensesDtoPaged(tripId)
-        val sumsFlow = getDailySums(tripId)
+        val pagingFlow = getExpensesDtoPaged(tripId, filter)
+        val sumsFlow = getDailySums(tripId, filter)
         val tripFlow = tripRepo.getTrip(tripId)
         return combine(pagingFlow, sumsFlow, tripFlow) { pagingData, sums, trip ->
             val currency = trip?.currency ?: ""
@@ -80,8 +93,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }.cachedIn(viewModelScope)
     }
 
-    fun getExpensesDto(tripId: Int): Flow<List<ExpenseDto>> =
-        expenseRepo.getExpensesDto(tripId)
+    fun getExpensesDto(tripId: Int, filter: String = ""): Flow<List<ExpenseDto>> =
+        expenseRepo.getExpensesDto(tripId, filter)
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun save(expense: Expense, trip: Trip) {
@@ -96,14 +109,20 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     }
 
 
-
     fun delete(expense: Expense) {
         viewModelScope.launch {
             expenseRepo.delete(expense)
         }
     }
 
+    fun delete(category: Category) {
+        viewModelScope.launch {
+            categoryRepo.delete(category)
+        }
+    }
+
     fun getCategories(): Flow<List<Category>> = categoryRepo.getCategories()
+    fun getArchivedCategories(): Flow<List<Category>> = categoryRepo.getArchivedCategories()
 
     fun save(category: Category) {
         viewModelScope.launch {
@@ -132,8 +151,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getDailySums(tripId: Int): Flow<Map<LocalDate, Double>> {
-        return getExpensesDto(tripId)
+    fun getDailySums(tripId: Int, filter: String): Flow<Map<LocalDate, Double>> {
+        return getExpensesDto(tripId, filter)
             .map { expenses ->
                 expenses.groupBy { it.expense.datetime.toLocalDate() }
                     .mapValues { (_, list) ->
@@ -182,7 +201,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     sealed class ExpenseListItemUi {
         data class Item(val expenseDto: ExpenseDto) : ExpenseListItemUi()
-        data class Header(val date: LocalDate, val sum: Double, val currency: String) : ExpenseListItemUi()
+        data class Header(val date: LocalDate, val sum: Double, val currency: String) :
+            ExpenseListItemUi()
     }
 }
 

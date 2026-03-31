@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +12,7 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -224,7 +226,7 @@ fun AddExpenseBottomSheet(
                         ) {
                         Text(
                             text = datetime.format(DateTimeFormatter.ofPattern("dd.MM HH:mm")),
-                            fontSize = 17.sp
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                     CategoryButton(
@@ -265,6 +267,11 @@ fun AddExpenseBottomSheet(
                         equationResult = evaluate(amount)
                         enableSave = amount.isDoubleTwoDigitsOrEquation() && equationResult > 0
                     },
+                    onLongBackspaceClick = {
+                        amount = "0.00"
+                        equationResult = evaluate(amount)
+                        enableSave = false
+                    }
                 )
 
                 SaveButton(
@@ -394,7 +401,13 @@ fun NoteInput(
 
 @Composable
 fun CurrencyButton(modifier: Modifier = Modifier, onClick: () -> Unit, text: String) {
-    Button(onClick = onClick, modifier = modifier, shape = MaterialTheme.shapes.medium) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.buttonColors()
+            .copy(containerColor = MaterialTheme.colorScheme.secondary)
+    ) {
         Text(text)
     }
 }
@@ -402,18 +415,35 @@ fun CurrencyButton(modifier: Modifier = Modifier, onClick: () -> Unit, text: Str
 @Composable
 fun CategoryButton(onClick: () -> Unit, category: Category, modifier: Modifier = Modifier) {
     Button(
+        contentPadding = PaddingValues(0.dp),
         onClick = onClick,
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors()
-            .copy(containerColor = Color(category.color.toColorInt()), contentColor = Color.Black)
+            .copy(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
     ) {
+//        Row(modifier = modifier.fillMaxWidth()) {
         Icon(
-            modifier = Modifier.padding(end = 10.dp),
+            tint = Color(category.color.toColorInt()),
+            modifier = Modifier
+                .size(30.dp)
+//                    .background(
+//                        color = MaterialTheme.colorScheme.prima,
+//                        shape = MaterialTheme.shapes.small
+//                    )
+                .padding(end = 10.dp),
             painter = painterResource(category.icon.resource),
             contentDescription = stringResource(R.string.category),
         )
-        Text(category.name)
+        Text(
+            text = category.name,
+            style = MaterialTheme.typography.titleMedium
+        )
+
+//        }
     }
 }
 
@@ -437,7 +467,8 @@ fun NumberKeyboard(
     modifier: Modifier = Modifier,
     onNumberClick: (String) -> Unit,
     onBackspaceClick: () -> Unit,
-    onOperatorClick: (String) -> Unit
+    onOperatorClick: (String) -> Unit,
+    onLongBackspaceClick: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -455,22 +486,23 @@ fun NumberKeyboard(
                             onClick = onBackspaceClick,
                             modifier = Modifier
                                 .weight(1f),
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = Color.Transparent,
+                            onLongClick = onLongBackspaceClick
                         )
 
                         "+", "/", "-", "*" -> KeyboardButton(
                             text = key,
                             onClick = { onOperatorClick(key) },
                             modifier = Modifier.weight(1f),
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         )
 
                         else -> KeyboardButton(
                             text = key,
                             onClick = { onNumberClick(key) },
                             modifier = Modifier.weight(1f),
-                            containerColor = MaterialTheme.colorScheme.secondary,
+                            containerColor = Color.Transparent,
                             contentColor = MaterialTheme.colorScheme.onSecondary
                         )
                     }
@@ -487,26 +519,24 @@ fun KeyboardButton(
     icon: Painter? = null,
     onClick: () -> Unit,
     enabled: Boolean = true,
+    onLongClick: () -> Unit = {},
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
 
-    Button(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
             .padding(2.dp)
-            .aspectRatio(2.5f),
-        enabled = enabled,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        )
-    ) {
+            .aspectRatio(2.5f)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .background(containerColor, shape = MaterialTheme.shapes.medium),
+
+        ) {
         when {
             text != null -> Text(
                 text,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.headlineMedium
             )
 
             icon != null -> Icon(painter = icon, contentDescription = null)
@@ -594,26 +624,31 @@ fun PreviewAddExpenseEnabled() {
 
 val categoriesToPreview = listOf(
     Category(
+        1,
         name = "Hotel",
         icon = cc.n0th1ng.tripmoney.utils.Icons.HOTEL,
         color = colors.random()
     ),
     Category(
+        2,
         name = "Jedzenie",
         icon = cc.n0th1ng.tripmoney.utils.Icons.RESTAURANT,
         color = colors.random()
     ),
     Category(
+        3,
         name = "Transport",
         icon = cc.n0th1ng.tripmoney.utils.Icons.FLIGHT,
         color = colors.random()
     ),
     Category(
+        4,
         name = "Rozrywka",
         icon = cc.n0th1ng.tripmoney.utils.Icons.ATTRACTION,
         color = colors.random()
     ),
     Category(
+        5,
         name = "Zakupy",
         icon = cc.n0th1ng.tripmoney.utils.Icons.GROCERIES,
         color = colors.random()

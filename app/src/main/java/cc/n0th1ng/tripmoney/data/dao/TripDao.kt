@@ -17,7 +17,7 @@ interface TripDao {
     @Query(
         """
         SELECT * FROM trip
-        ORDER BY DATE(trip.start_date) DESC
+        ORDER BY trip.start_date DESC
     """
     )
     fun tripsPaged(): PagingSource<Int, Trip>

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -50,16 +48,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.navigation.Screens
-import cc.n0th1ng.tripmoney.screens.addexpense.AddExpenseBottomSheet
 import cc.n0th1ng.tripmoney.screens.listexpense.DeleteConfirmationDialog
+import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -70,9 +73,38 @@ fun TripPickerScreen(
 ) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
-    var showBottomSheet by remember { mutableStateOf(false) }
-    val trips: LazyPagingItems<Trip> = tripViewModel.getTrips().collectAsLazyPagingItems()
+    val tripsFlow = tripViewModel.getTrips()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
+
+    TripPickerScreen(
+        tripsFlow = tripsFlow,
+        currentTripId = currentTripId,
+        onDelete = { trip -> tripViewModel.delete(trip) },
+        onClick = { trip ->
+            settingsViewModel.setCurrentTrip(trip.id)
+            navController.navigate(Screens.LIST_EXPENSE)
+        },
+        onSave = { trip ->
+            tripViewModel.save(trip)
+        }
+
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+fun TripPickerScreen(
+    tripsFlow: Flow<PagingData<Trip>>,
+    currentTripId: Int,
+    onDelete: (Trip) -> Unit,
+    onClick: (Trip) -> Unit,
+    onSave: (Trip) -> Unit
+) {
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val trips: LazyPagingItems<Trip> = tripsFlow.collectAsLazyPagingItems()
+
     var tripToEdit by remember { mutableStateOf<Trip?>(null) }
     Scaffold(floatingActionButtonPosition = FabPosition.EndOverlay, floatingActionButton = {
         FloatingActionButton(
@@ -91,12 +123,12 @@ fun TripPickerScreen(
                 val trip = trips[i]
                 if (trip != null) {
                     SwipeToDeleteTripCard(
-                        trip, onDelete = {
-                        tripViewModel.delete(trip)
-                    }, onClick = {
-                        settingsViewModel.setCurrentTrip(trip.id)
-                        navController.navigate(Screens.LIST_EXPENSE)
-                    }, isSelected = currentTripId == trip.id,
+                        trip = trip,
+                        onDelete = {
+                            onDelete(trip)
+                        }, onClick = {
+                            onClick(trip)
+                        }, isSelected = currentTripId == trip.id,
                         onLongClick = { trip ->
                             tripToEdit = trip
                             showBottomSheet = true
@@ -113,7 +145,7 @@ fun TripPickerScreen(
                     tripToEdit = null
                 },
                 onSave = { trip ->
-                    tripViewModel.save(trip)
+                    onSave(trip)
                     showBottomSheet = false
                     tripToEdit = null
                 },
@@ -152,7 +184,6 @@ fun SwipeToDeleteTripCard(
         }
 
         SwipeToDismissBox(
-            modifier = Modifier.alpha(if (isSelected) 1.0f else 0.7f),
             state = dismissState,
             enableDismissFromStartToEnd = false,
             backgroundContent = {
@@ -160,7 +191,7 @@ fun SwipeToDeleteTripCard(
                     Modifier
                         .clip(CardDefaults.elevatedShape)
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.onError)
+                        .background(MaterialTheme.colorScheme.errorContainer)
                         .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.CenterEnd
                 ) {
@@ -186,7 +217,7 @@ fun TripCard(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
-                MaterialTheme.colorScheme.secondary
+                MaterialTheme.colorScheme.surfaceContainer
             }
         ),
         modifier = Modifier
@@ -195,7 +226,7 @@ fun TripCard(
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 onLongClick(trip)
             }, onClick = { onClick(trip) }),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 7.dp else 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -215,5 +246,40 @@ fun TripCard(
                 fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@AllPreviews
+@Composable
+fun PreviewTripPickerScreen() {
+    val tripsToPreview = listOf(
+        Trip(
+            1,
+            name = "Włochy",
+            startDate = LocalDate.parse("2026-03-01"),
+            currency = "PLN"
+        ),
+        Trip(
+            2,
+            name = "Szwajcaria",
+            startDate = LocalDate.parse("2025-03-01"),
+            currency = "EUR"
+        ),
+        Trip(
+            3,
+            name = "Portugalia",
+            startDate = LocalDate.parse("2025-03-01"),
+            currency = "USD"
+        )
+    )
+    TripMoneyTheme {
+        TripPickerScreen(
+            tripsFlow = MutableStateFlow(PagingData.from(tripsToPreview)),
+            currentTripId = 1,
+            onDelete = {},
+            onClick = {},
+            onSave = {}
+        )
     }
 }

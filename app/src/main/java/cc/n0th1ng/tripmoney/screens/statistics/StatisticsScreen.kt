@@ -1,5 +1,6 @@
 package cc.n0th1ng.tripmoney.screens.statistics
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -13,9 +14,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Trip
@@ -82,9 +90,10 @@ fun StatisticsScreen(
 
 @Composable
 fun Summary(summaryAmount: Double, currency: String) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors()
+            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Row(
             modifier = Modifier
@@ -94,7 +103,10 @@ fun Summary(summaryAmount: Double, currency: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(stringResource(cc.n0th1ng.tripmoney.R.string.total_expenses), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    stringResource(cc.n0th1ng.tripmoney.R.string.total_expenses),
+                    style = MaterialTheme.typography.titleSmall
+                )
                 Text(
                     "%.2f %s".format(summaryAmount, currency),
                     style = MaterialTheme.typography.headlineLarge
@@ -118,7 +130,11 @@ fun Summary(summaryAmount: Double, currency: String) {
 
 @Composable
 fun SummaryPerCategoryCard(summaryPerCategoryList: List<SummaryPerCategory>) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors()
+            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
         Column(
             modifier = Modifier.padding(15.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -191,16 +207,19 @@ fun CategoryCard(modifier: Modifier = Modifier, summaryPerCategory: SummaryPerCa
     }
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
 @AllPreviews
 @Composable
 fun Preview() {
     TripMoneyTheme {
-        StatisticsScreen(
-            summaryPerCategoryList,
-            summaryAmount = 125.24,
-            Currencies.entries.random()
-        )
+        Scaffold {
+            StatisticsScreen(
+                summaryPerCategoryList,
+                summaryAmount = 125.24,
+                Currencies.entries.random()
+            )
+        }
     }
 }
 

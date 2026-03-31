@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "tripMoney"
 include(":app")
- 
+include(":baselineprofile")

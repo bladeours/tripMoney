@@ -45,7 +45,6 @@ class ExchangeRateRepository @Inject constructor(
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun clearOldRates(daysToKeep: Int = 180) {
         val cutoffDate = LocalDate.now().minusDays(daysToKeep.toLong()).toString()

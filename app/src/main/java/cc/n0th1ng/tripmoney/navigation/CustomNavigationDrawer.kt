@@ -100,4 +100,5 @@ object Screens {
     const val TRIP_PICKER = "trip_picker"
     const val STATISTICS = "statistics"
     const val SETTINGS = "settings"
+    const val MANAGE_CATEGORIES = "manage_categories"
 }

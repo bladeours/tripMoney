@@ -16,22 +16,38 @@ interface ExpenseDao {
     @Upsert
     suspend fun insert(expense: Expense)
 
+
     @Query(
         """
-        SELECT * FROM expense WHERE trip_id = :tripId
+        SELECT expense.*, category.*
+        FROM expense
+        JOIN category ON expense.category_id = category.id
+        WHERE expense.trip_id = :tripId
+          AND
+           (
+            (:filter IS NULL OR category.name LIKE '%' || :filter || '%')
+            OR (:filter IS NULL OR expense.note LIKE '%' || :filter || '%')
+          )
         ORDER BY expense.datetime DESC
-    """
+        """
     )
-    fun expenseDtoPaged(tripId: Int): PagingSource<Int, ExpenseDto>
+    fun expenseDtoPaged(tripId: Int, filter: String): PagingSource<Int, ExpenseDto>
 
     @Transaction
     @Query(
     """
-        SELECT * FROM expense WHERE trip_id = :tripId
+        SELECT * FROM expense
+        JOIN category ON expense.category_id = category.id
+        WHERE trip_id = :tripId
+          AND
+           (
+            (:filter IS NULL OR category.name LIKE '%' || :filter || '%')
+            OR (:filter IS NULL OR expense.note LIKE '%' || :filter || '%')
+          )
         ORDER BY expense.datetime DESC
     """
     )
-    fun expenseDto(tripId: Int): Flow<List<ExpenseDto>>
+    fun expenseDto(tripId: Int, filter: String): Flow<List<ExpenseDto>>
 
     @Delete
     suspend fun delete(expense: Expense)

@@ -1,13 +1,25 @@
 package cc.n0th1ng.tripmoney.data.entity
 
+import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import java.time.LocalDateTime
 
-@Entity(tableName = "expense")
+@Entity(
+    tableName = "expense",
+    foreignKeys = [ForeignKey(
+        entity = Category::class,
+        parentColumns = arrayOf("id"),
+        childColumns = arrayOf("category_id"),
+        onUpdate = ForeignKey.CASCADE,
+        onDelete = ForeignKey.CASCADE
+    )]
+)
+@Immutable
 data class Expense(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo("amount") val amount: Double,

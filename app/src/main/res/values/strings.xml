@@ -5,7 +5,7 @@
     <string name="save">Save</string>
     <string name="backspace">Backspace</string>
     <string name="pick_category">Pick a category</string>
-    <string name="add_new_category">Add new</string>
+    <string name="add_new">Add new</string>
     <string name="pick_currency">Pick a currency</string>
     <string name="cancel">Cancel</string>
     <string name="add_expense">Add expense</string>
@@ -27,4 +27,13 @@
     <string name="list_of_expenses">List of expenses</string>
     <string name="statistics">Statistics</string>
     <string name="export_to_csv">Export to CSV</string>
+    <string name="export_csv_subttext">Save expenses from %s to a file</string>
+    <string name="manage_categories">Manage categories</string>
+    <string name="categories">Categories</string>
+    <string name="add_new_category">Add category</string>
+    <string name="edit_category">Edit category</string>
+    <string name="archive">Archive</string>
+    <string name="you_want_archive">Do you want to archive?</string>
+    <string name="archive_category_info">No expense will be deleted.</string>
+    <string name="delete_category_info">Your all expenses with category Hotel will be removed.</string>
 </resources>

@@ -12,8 +12,11 @@ import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategoryRaw
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.utils.Currencies
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,15 +35,15 @@ class ExpenseRepository @Inject constructor(
         expenseDao.delete(expense)
     }
 
-    fun getExpensesDtoPaged(tripId: Int): Flow<PagingData<ExpenseDto>> {
+    fun getExpensesDtoPaged(tripId: Int, filter: String): Flow<PagingData<ExpenseDto>> {
         return Pager(
             config = PagingConfig(pageSize = 50, enablePlaceholders = false),
-            pagingSourceFactory = { expenseDao.expenseDtoPaged(tripId) }
+            pagingSourceFactory = { expenseDao.expenseDtoPaged(tripId, filter) }
         ).flow
     }
 
-    fun getExpensesDto(tripId: Int): Flow<List<ExpenseDto>> {
-        return expenseDao.expenseDto(tripId)
+    fun getExpensesDto(tripId: Int, filter: String = ""): Flow<List<ExpenseDto>> {
+        return expenseDao.expenseDto(tripId, filter)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

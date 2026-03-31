@@ -1,6 +1,7 @@
 package cc.n0th1ng.tripmoney.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
@@ -14,12 +15,23 @@ interface CategoryDao {
     suspend fun insert(category: Category)
 
 
+    @Delete
+    suspend fun delete(category: Category)
+
     @Transaction
     @Query(
         """
-        SELECT * FROM category
+        SELECT * FROM category WHERE archived is 0
     """
     )
     fun categories(): Flow<List<Category>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM category WHERE archived is 1
+    """
+    )
+    fun archivedCategories(): Flow<List<Category>>
 
 }

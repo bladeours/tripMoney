@@ -7,7 +7,6 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import androidx.sqlite.db.SupportSQLiteDatabase
 import cc.n0th1ng.tripmoney.data.dao.CategoryDao
 import cc.n0th1ng.tripmoney.data.dao.ExchangeRateDao
 import cc.n0th1ng.tripmoney.data.dao.ExpenseDao
@@ -15,24 +14,34 @@ import cc.n0th1ng.tripmoney.data.dao.TripDao
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.ExchangeRate
 import cc.n0th1ng.tripmoney.data.entity.Expense
+import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.data.entity.Trip
+import cc.n0th1ng.tripmoney.screens.listexpense.toEpochMilli
+import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.utils.Icons
 import cc.n0th1ng.tripmoney.utils.colors
-import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
-import javax.inject.Inject
+import java.time.ZoneOffset
 import javax.inject.Singleton
+import kotlin.random.Random
+import kotlin.random.nextInt
 
-@Database(entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class], version = 1)
+@Database(
+    entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class],
+    version = 1
+)
 @TypeConverters(Converters::class)
 abstract class TripDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
@@ -46,21 +55,28 @@ abstract class TripDatabase : RoomDatabase() {
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+
     @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
     fun provideTripDatabase(
-        @ApplicationContext context: Context,
-//        expenseAndCategoryViewModel: ExpenseAndCategoryViewModel
+        @ApplicationContext context: Context
     ): TripDatabase {
-
         val db: TripDatabase = Room.inMemoryDatabaseBuilder(
-            context, TripDatabase::class.java
-        ).allowMainThreadQueries().build()
+//        val db: TripDatabase = Room.databaseBuilder(
+//            name = "tripmoney_db",
+            context = context,
+            klass = TripDatabase::class.java,
+        )
+            .allowMainThreadQueries() // TODO Remove in production!
+            .fallbackToDestructiveMigration() // TODO Handle schema changes during dev
+            .build()
 
         CoroutineScope(Dispatchers.IO).launch {
             DatabasePrepopulator(
-                tripDao = db.tripDao(), categoryDao = db.categoryDao(), expenseDao = db.expenseDao()
+                tripDao = db.tripDao(),
+                categoryDao = db.categoryDao(),
+                expenseDao = db.expenseDao()
             ).prepopulate()
         }
         return db
@@ -99,169 +115,92 @@ private class DatabasePrepopulator(
 ) {
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun prepopulate() {
-        tripDao.insert(Trip(name = "Włochy", startDate = LocalDate.parse("2026-03-01"), currency = "PLN"))
-        tripDao.insert(Trip(name = "Szwajcaria", startDate =LocalDate.parse("2025-03-01"), currency = "EUR"))
-        tripDao.insert(Trip(name = "Portugalia", startDate = LocalDate.parse("2025-03-01"), currency = "USD"))
-        categoryDao.insert(Category(name = "Accomodation", icon = Icons.HOTEL, color = colors.random()))
-        categoryDao.insert(Category(name = "Transport", icon = Icons.TRANSPORT, color = colors.random()))
-        categoryDao.insert(Category(name = "Flight", icon = Icons.FLIGHT, color = colors.random()))
-        categoryDao.insert(Category(name = "Restaurants", icon = Icons.RESTAURANT, color = colors.random()))
-        categoryDao.insert(Category(name = "Groceries", icon = Icons.GROCERIES, color = colors.random()))
-        categoryDao.insert(Category(name = "Coffee", icon = Icons.COFFEE,color = colors.random()))
-        categoryDao.insert(Category(name = "Entertainment", icon = Icons.ENTERTAINMENT,color = colors.random()))
-        categoryDao.insert(Category(name = "Laundry", icon = Icons.LAUNDRY,color = colors.random()))
+
+        tripDao.insert(
+            Trip(
+                name = "Włochy",
+                startDate = LocalDate.parse("2026-03-01"),
+                currency = "PLN"
+            )
+        )
+        tripDao.insert(
+            Trip(
+                name = "Szwajcaria",
+                startDate = LocalDate.parse("2025-03-01"),
+                currency = "EUR"
+            )
+        )
+        tripDao.insert(
+            Trip(
+                name = "Portugalia",
+                startDate = LocalDate.parse("2025-03-01"),
+                currency = "USD"
+            )
+        )
+        for (category in sampleCategories) {
+            categoryDao.insert(category)
+        }
+        for (expense in sampleExpenses) {
+            expenseDao.insert(expense)
+        }
 
 
-        val now = LocalDateTime.now()
-        expenseDao.insert(
-            Expense(
-                amount = 120.50,
-                currency = "PLN",
-                note = "Hotel overnight",
-                datetime = now.minusDays(10),
-                categoryId = 1,
-                tripId = 1
-            )
+    }
+
+    val sampleCategories = listOf(
+        Category(
+            name = "Hotel",
+            icon = Icons.HOTEL,
+            color = colors.random()
+        ),
+        Category(
+            name = "Jedzenie",
+            icon = Icons.RESTAURANT,
+            color = colors.random()
+        ),
+        Category(
+            name = "Transport",
+            icon = Icons.FLIGHT,
+            color = colors.random()
+        ),
+        Category(
+            name = "Rozrywka",
+            icon = Icons.ATTRACTION,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+    )
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val sampleExpenses = (0..150).map { i ->
+
+        val datetime = if (i > 4) {
+            val now = LocalDateTime.now()
+            val min = now.minusDays(10).toInstant(ZoneOffset.UTC).toEpochMilli()
+            val max = now.toInstant(ZoneOffset.UTC).toEpochMilli()
+            val randomMillis = Random.nextLong(min, max)
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(randomMillis), ZoneOffset.UTC)
+        } else {
+            LocalDateTime.now()
+        }
+
+
+        val expense = Expense(
+            categoryId = Random.nextInt(1, 5),
+            tripId = 1,
+            amount = Random.nextDouble(0.1, 300.0),
+            currency = Currencies.entries.random().name,
+            note = if (i % 3 == 0) "Some note" else "",
+            datetime = datetime,
+            rate = if (Random.nextBoolean()) Random.nextDouble(
+                0.1,
+                5.0
+            ) else 1.0
         )
-        expenseDao.insert(
-            Expense(
-                amount = 45.75,
-                currency = "PLN",
-                note = "Dinner",
-                datetime = now.minusDays(9),
-                categoryId = 2,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 15.20,
-                currency = "PLN",
-                note = "Bus ticket",
-                datetime = now.minusDays(8),
-                categoryId = 3,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 89.99,
-                currency = "PLN",
-                note = "Concert tickets",
-                datetime = now.minusDays(7),
-                categoryId = 4,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 32.50,
-                currency = "PLN",
-                note = "Souvenirs",
-                datetime = now.minusDays(6),
-                categoryId = 5,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 180.00,
-                currency = "PLN",
-                note = "Hotel 3 nights",
-                datetime = now.minusDays(5),
-                categoryId = 1,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 67.30,
-                currency = "PLN",
-                note = "Lunch",
-                datetime = now.minusDays(4),
-                categoryId = 2,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 22.00,
-                currency = "PLN",
-                note = "Train ticket",
-                datetime = now.minusDays(3),
-                categoryId = 3,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 55.00,
-                currency = "PLN",
-                note = "Museum entry",
-                datetime = now.minusDays(2),
-                categoryId = 4,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 12.99,
-                currency = "PLN",
-                note = "Snacks",
-                datetime = now.minusDays(1),
-                categoryId = 2,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 210.00,
-                currency = "PLN",
-                note = "Hotel 5 nights",
-                datetime = now,
-                categoryId = 1,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 95.50,
-                currency = "EUR",
-                note = "Dinner for two",
-                datetime = now.minusHours(12),
-                categoryId = 2,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 30.00,
-                currency = "EUR",
-                note = "Taxi",
-                datetime = now.minusHours(6),
-                categoryId = 3,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 40.00,
-                currency = "USD",
-                note = "Gifts",
-                datetime = now.minusHours(3),
-                categoryId = 5,
-                tripId = 1
-            )
-        )
-        expenseDao.insert(
-            Expense(
-                amount = 75.00,
-                currency = "PLN",
-                note = "Sightseeing tour",
-                datetime = now.minusHours(1),
-                categoryId = 4,
-                tripId = 1
-            )
-        )
+        expense
     }
 }

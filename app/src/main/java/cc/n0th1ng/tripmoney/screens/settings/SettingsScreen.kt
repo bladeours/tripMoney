@@ -38,10 +38,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import cc.n0th1ng.tripmoney.R.*
+import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
+import cc.n0th1ng.tripmoney.navigation.Screens
+import cc.n0th1ng.tripmoney.screens.listexpense.CategorySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
+import cc.n0th1ng.tripmoney.screens.statistics.categories
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
@@ -60,7 +66,7 @@ import java.nio.file.Files
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(navController: NavHostController) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTheme by settingsViewModel.theme.collectAsState()
     val currentDefaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
@@ -68,6 +74,7 @@ fun SettingsScreen() {
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
+    val categories by expenseAndCategoryViewModel.getCategories().collectAsState(emptyList())
     val context = LocalContext.current
     val tripName = currentTrip?.name ?: ""
     val scope = rememberCoroutineScope()
@@ -90,7 +97,8 @@ fun SettingsScreen() {
                     e.printStackTrace()
                 }
             }
-        }
+        },
+        onCategoriesClick = {navController.navigate(Screens.MANAGE_CATEGORIES)}
     )
 }
 
@@ -103,11 +111,13 @@ fun SettingsScreen(
     onCurrencySave: (Currencies) -> Unit,
     tripName: String,
     onExportToCsv: () -> Unit,
+    onCategoriesClick: () -> Unit
 ) {
 
     Scaffold { padding ->
         var showThemeDialog by remember { mutableStateOf(false) }
         var showCurrencyDialog by remember { mutableStateOf(false) }
+        var showCategoriesDialog by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -142,8 +152,14 @@ fun SettingsScreen(
             SettingsListItem(
                 onClick = onExportToCsv,
                 stringResource(string.export_to_csv),
-                supportingText = "Save expenses from %s to a file".format(tripName),
+                supportingText = stringResource(string.export_csv_subttext).format(tripName),
                 iconResource = R.drawable.materialsymbols_ic_csv_outlined
+            )
+            SettingsListItem(
+                onClick = onCategoriesClick,
+                stringResource(string.categories),
+                supportingText = stringResource(string.manage_categories),
+                iconResource = R.drawable.materialsymbols_ic_label_outlined
             )
 
             if (showThemeDialog) {
@@ -258,7 +274,14 @@ fun ThemeSelectionDialog(
 @Composable
 fun PreviewSettingsScreen() {
     TripMoneyTheme {
-        SettingsScreen(Currencies.entries.random(), AppTheme.entries.random(), {}, {}, "Włochy", {})
+        SettingsScreen(
+            Currencies.entries.random(),
+            AppTheme.entries.random(),
+            {},
+            {},
+            "Włochy",
+            {},
+            {})
     }
 }
 
