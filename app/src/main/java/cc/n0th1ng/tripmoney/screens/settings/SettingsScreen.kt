@@ -19,6 +19,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -69,12 +70,12 @@ import java.nio.file.Files
 fun SettingsScreen(navController: NavHostController) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTheme by settingsViewModel.theme.collectAsState()
+    val currentAddExpenseSwitch by settingsViewModel.addExpenseSwitch.collectAsState()
     val currentDefaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
-    val categories by expenseAndCategoryViewModel.getCategories().collectAsState(emptyList())
     val context = LocalContext.current
     val tripName = currentTrip?.name ?: ""
     val scope = rememberCoroutineScope()
@@ -84,6 +85,9 @@ fun SettingsScreen(navController: NavHostController) {
         currentTheme = currentTheme,
         onThemeSave = { settingsViewModel.setTheme(it) },
         onCurrencySave = { settingsViewModel.setDefaultCurrency(it) },
+        onAddExpenseSwitch = {
+            settingsViewModel.setCurrentAddExpenseSwitch(it)
+        },
         tripName = tripName,
         onExportToCsv = {
             scope.launch {
@@ -98,7 +102,8 @@ fun SettingsScreen(navController: NavHostController) {
                 }
             }
         },
-        onCategoriesClick = {navController.navigate(Screens.MANAGE_CATEGORIES)}
+        onCategoriesClick = { navController.navigate(Screens.MANAGE_CATEGORIES) },
+        currentAddExpenseSwitch = currentAddExpenseSwitch
     )
 }
 
@@ -111,13 +116,14 @@ fun SettingsScreen(
     onCurrencySave: (Currencies) -> Unit,
     tripName: String,
     onExportToCsv: () -> Unit,
-    onCategoriesClick: () -> Unit
+    onCategoriesClick: () -> Unit,
+    onAddExpenseSwitch: (Boolean) -> Unit,
+    currentAddExpenseSwitch: Boolean
 ) {
 
     Scaffold { padding ->
         var showThemeDialog by remember { mutableStateOf(false) }
         var showCurrencyDialog by remember { mutableStateOf(false) }
-        var showCategoriesDialog by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,6 +166,15 @@ fun SettingsScreen(
                 stringResource(string.categories),
                 supportingText = stringResource(string.manage_categories),
                 iconResource = R.drawable.materialsymbols_ic_label_outlined
+            )
+            SettingsListItem(
+                onClick = onCategoriesClick,
+                stringResource(string.add_expense),
+                supportingText = stringResource(string.add_expense_settings),
+                iconResource = R.drawable.materialsymbols_ic_payments_outlined,
+                trailingContent = {
+                    Switch(checked = currentAddExpenseSwitch, onCheckedChange = {onAddExpenseSwitch(it)})
+                }
             )
 
             if (showThemeDialog) {
@@ -209,7 +224,7 @@ fun SettingsListItem(
     headlineText: String,
     trailingContent: @Composable () -> Unit = {},
     supportingText: String,
-    iconResource: Int
+    iconResource: Int,
 ) {
     Card {
         ListItem(
@@ -225,6 +240,7 @@ fun SettingsListItem(
         )
     }
 }
+
 
 @Composable
 fun ThemeSelectionDialog(
@@ -275,13 +291,16 @@ fun ThemeSelectionDialog(
 fun PreviewSettingsScreen() {
     TripMoneyTheme {
         SettingsScreen(
-            Currencies.entries.random(),
-            AppTheme.entries.random(),
-            {},
-            {},
-            "Włochy",
-            {},
-            {})
+            currentDefaultCurrency = Currencies.entries.random(),
+            currentTheme = AppTheme.entries.random(),
+            onThemeSave = {},
+            onCurrencySave = {},
+            onExportToCsv = {},
+            tripName = "Włochy",
+            onCategoriesClick = {},
+            onAddExpenseSwitch = {},
+            currentAddExpenseSwitch = false
+            )
     }
 }
 

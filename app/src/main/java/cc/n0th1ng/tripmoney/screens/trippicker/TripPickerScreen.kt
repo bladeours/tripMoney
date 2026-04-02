@@ -58,6 +58,7 @@ import cc.n0th1ng.tripmoney.navigation.Screens
 import cc.n0th1ng.tripmoney.screens.listexpense.DeleteConfirmationDialog
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
+import cc.n0th1ng.tripmoney.utils.pretty
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import kotlinx.coroutines.flow.Flow
@@ -204,6 +205,7 @@ fun SwipeToDeleteTripCard(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TripCard(
     trip: Trip,
@@ -236,15 +238,34 @@ fun TripCard(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text(fontSize = 25.sp, fontWeight = FontWeight.SemiBold, text = trip.name)
-                Text(trip.startDate.toString())
+                Text(
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    text = trip.name
+                )
+                Text(
+                    style = MaterialTheme.typography.bodySmall,
+                    text = "start: " + trip.startDate.pretty() + "\nend: " + trip.endDate.pretty()
+                )
             }
-            Text(
-                trip.currency.uppercase(),
-                modifier = Modifier.padding(20.dp),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Column(
+                modifier = Modifier.padding(end = 20.dp),
+                horizontalAlignment = Alignment.End) {
+                Text(
+                    trip.currency.uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "budget:",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    "%.2f".format(trip.budget),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+
+            }
         }
     }
 }
@@ -258,18 +279,22 @@ fun PreviewTripPickerScreen() {
             1,
             name = "Włochy",
             startDate = LocalDate.parse("2026-03-01"),
-            currency = "PLN"
+            endDate = LocalDate.parse("2026-03-14"),
+            currency = "PLN",
+            budget = 1053.53
         ),
         Trip(
             2,
             name = "Szwajcaria",
             startDate = LocalDate.parse("2025-03-01"),
+            endDate = LocalDate.parse("2025-03-11"),
             currency = "EUR"
         ),
         Trip(
             3,
             name = "Portugalia",
             startDate = LocalDate.parse("2025-03-01"),
+            endDate = LocalDate.parse("2025-03-11"),
             currency = "USD"
         )
     )

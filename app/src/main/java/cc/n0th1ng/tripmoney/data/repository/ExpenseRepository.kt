@@ -25,6 +25,10 @@ class ExpenseRepository @Inject constructor(
     private val exchangeRateRepository: ExchangeRateRepository
 ) {
 
+    fun getBudgetLeft(tripId: Int): Double {
+        return expenseDao.budgetLeft(tripId)
+    }
+
     @WorkerThread
     suspend fun save(expense: Expense) {
         expenseDao.insert(expense)

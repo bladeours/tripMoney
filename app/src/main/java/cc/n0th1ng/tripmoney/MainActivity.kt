@@ -16,15 +16,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.paging.compose.collectAsLazyPagingItems
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.navigation.BottomNavigation
@@ -42,7 +45,9 @@ import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -53,12 +58,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TripMoneyTheme {
-                val settingsViewModel: SettingsViewModel = hiltViewModel()
-                val currentTripId by settingsViewModel.currentTrip.collectAsState()
-                val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
-                expenseAndCategoryViewModel.clearOldRates()
-                expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId)
-                    .collectAsLazyPagingItems()
                 NavigationDrawer()
             }
         }
@@ -78,12 +77,12 @@ fun NavigationDrawer() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var filter by remember { mutableStateOf("") }
+    val autoOpenPref by settingsViewModel.autoOpenStartupPref.collectAsState()
+    var hasHandledStartupOpen by rememberSaveable { mutableStateOf(false) }
+    val shouldTriggerAutoOpen = autoOpenPref == true && !hasHandledStartupOpen
 
     CustomNavigationDrawer(navController, drawerState) {
         Scaffold(
-            modifier = Modifier.semantics {
-                testTagsAsResourceId = true
-            },
             topBar = {
                 if (current == Screens.SETTINGS) TopBarSettings(
                     navController
@@ -99,7 +98,7 @@ fun NavigationDrawer() {
                         }
                     },
                     isSearchable = current == Screens.LIST_EXPENSE,
-                    onFilterChange = { newFilter -> filter = newFilter})
+                    onFilterChange = { newFilter -> filter = newFilter })
             },
 
             bottomBar = { BottomNavigation(navController) }) { innerPadding ->
@@ -109,7 +108,10 @@ fun NavigationDrawer() {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Screens.LIST_EXPENSE) {
-                    ListExpenseScreen(filter)
+                    ListExpenseScreen(
+                        filter,
+                        initialAutoOpen = shouldTriggerAutoOpen,
+                        onAutoOpenConsumed = { hasHandledStartupOpen = true })
                 }
                 composable(Screens.TRIP_PICKER) {
                     TripPickerScreen(navController)

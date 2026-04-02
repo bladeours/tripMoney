@@ -97,7 +97,7 @@ dependencies {
     implementation("androidx.paging:paging-compose:3.4.2")
     implementation("androidx.datastore:datastore-preferences:1.2.1")
 
-    implementation("com.composables:icons-material-symbols-outlined-android:2.2.1")
+    implementation(libs.icons.material.symbols.outlined.android)
 
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-android-compiler:2.57.1")

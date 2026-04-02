@@ -46,14 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
@@ -73,7 +71,6 @@ import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filter
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -83,7 +80,9 @@ import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ListExpenseScreen(filter: String) {
+fun ListExpenseScreen(filter: String,
+                      initialAutoOpen: Boolean,
+                      onAutoOpenConsumed: () -> Unit ) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
@@ -97,7 +96,9 @@ fun ListExpenseScreen(filter: String) {
         expensesFlow = expensesFlow,
         onSaveExpense = { expenseAndCategoryViewModel.save(it, currentTrip!!) },
         onDeleteExpense = { expenseAndCategoryViewModel.delete(it) },
-        isRecalculatingRate = isRecalculatingRate
+        isRecalculatingRate = isRecalculatingRate,
+        initialAutoOpen = initialAutoOpen,
+        onAutoOpenConsumed = onAutoOpenConsumed
     )
 }
 
@@ -108,12 +109,23 @@ fun ListExpenseScreen(filter: String) {
 fun ListExpenseScreen(
     expensesFlow: Flow<PagingData<ExpenseListItemUi>>,
     onSaveExpense: (Expense) -> Unit, onDeleteExpense: (Expense) -> Unit,
-    isRecalculatingRate: Boolean
+    isRecalculatingRate: Boolean,
+    initialAutoOpen: Boolean,
+    onAutoOpenConsumed: () -> Unit
 ) {
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showBottomSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialAutoOpen) {
+        if (initialAutoOpen) {
+            showBottomSheet = true
+            onAutoOpenConsumed()
+        }
+    }
 
     val items = expensesFlow.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
-    var showBottomSheet by remember { mutableStateOf(false) }
     var expenseDtoToEdit by remember { mutableStateOf<ExpenseDto?>(null) }
     var itemToDelete by remember { mutableStateOf<Expense?>(null) }
 
@@ -196,7 +208,7 @@ fun ListExpenseScreen(
                     showBottomSheet = false
                 },
                 expenseDtoToEdit = expenseDtoToEdit,
-                state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                state = sheetState
             )
         }
     }
@@ -216,7 +228,9 @@ fun CustomDivider(date: LocalDate, sum: Double, currency: String) {
             date.format(
                 DateTimeFormatter.ofPattern("dd EEEE")
             ).toString(),
-            modifier = Modifier.padding(horizontal = 5.dp).background(Color.White.copy(alpha = 0f)),
+            modifier = Modifier
+                .padding(horizontal = 5.dp)
+                .background(Color.White.copy(alpha = 0f)),
             style = MaterialTheme.typography.titleMedium
         )
         Row(
@@ -446,7 +460,9 @@ fun PreviewListExpenseScreen() {
             expensesFlow = MutableStateFlow(pagingData),
             onSaveExpense = {},
             onDeleteExpense = {},
-            true
+            isRecalculatingRate = true,
+            false,
+            {}
         )
 
     }
@@ -497,7 +513,8 @@ private fun sampleExpenseDtoWithConvertedAmountList(): List<ExpenseListItemUi> {
         id = 1,
         name = "Vacation",
         currency = "USD",
-        startDate = LocalDate.parse("2026-01-01")
+        startDate = LocalDate.parse("2026-01-01"),
+        endDate = LocalDate.parse("2026-01-11"),
     )
 
     val startLong = LocalDateTime.now().minusDays(10).toEpochMilli()

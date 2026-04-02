@@ -49,6 +49,14 @@ interface ExpenseDao {
     )
     fun expenseDto(tripId: Int, filter: String): Flow<List<ExpenseDto>>
 
+    @Query("""
+    SELECT trip.budget - IFNULL(SUM(expense.amount * expense.rate), 0)
+    FROM trip
+    LEFT JOIN expense ON expense.trip_id = trip.id
+    WHERE trip.id = :tripId
+    """)
+    fun budgetLeft(tripId: Int): Double
+
     @Delete
     suspend fun delete(expense: Expense)
 }

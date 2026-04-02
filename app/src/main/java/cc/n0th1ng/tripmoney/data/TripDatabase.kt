@@ -120,6 +120,7 @@ private class DatabasePrepopulator(
             Trip(
                 name = "Włochy",
                 startDate = LocalDate.parse("2026-03-01"),
+                endDate = LocalDate.parse("2026-03-15"),
                 currency = "PLN"
             )
         )
@@ -127,6 +128,7 @@ private class DatabasePrepopulator(
             Trip(
                 name = "Szwajcaria",
                 startDate = LocalDate.parse("2025-03-01"),
+                endDate = LocalDate.parse("2025-03-15"),
                 currency = "EUR"
             )
         )
@@ -134,6 +136,7 @@ private class DatabasePrepopulator(
             Trip(
                 name = "Portugalia",
                 startDate = LocalDate.parse("2025-03-01"),
+                endDate = LocalDate.parse("2025-03-15"),
                 currency = "USD"
             )
         )

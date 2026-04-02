@@ -14,12 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,13 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
+import androidx.core.graphics.toColorLong
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Trip
@@ -66,7 +62,8 @@ fun StatisticsScreen() {
     StatisticsScreen(
         summaryPerCategoryList,
         summaryAmount,
-        Currencies.valueOf(currentTrip?.currency ?: Currencies.default().name)
+        Currencies.valueOf(currentTrip?.currency ?: Currencies.default().name),
+        expenseAndCategoryViewModel.getBudgetLeft(currentTripId)
     )
 }
 
@@ -75,7 +72,8 @@ fun StatisticsScreen() {
 fun StatisticsScreen(
     summaryPerCategoryList: List<SummaryPerCategory>,
     summaryAmount: Double,
-    tripCurrency: Currencies
+    tripCurrency: Currencies,
+    moneyLeft: Double
 ) {
     Column(
         modifier = Modifier
@@ -83,48 +81,70 @@ fun StatisticsScreen(
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Summary(summaryAmount, tripCurrency.name)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Summary(
+                Modifier.weight(1f), -1 * summaryAmount, tripCurrency.name,
+                stringResource(cc.n0th1ng.tripmoney.R.string.total_expenses),
+                R.drawable.materialsymbols_ic_payment_arrow_down_outlined,
+                iconColor = MaterialTheme.colorScheme.error
+            )
+            Summary(
+                Modifier.weight(1f), moneyLeft, tripCurrency.name,
+                stringResource(cc.n0th1ng.tripmoney.R.string.money_left),
+                R.drawable.materialsymbols_ic_payments_outlined,
+                iconColor = colorResource(cc.n0th1ng.tripmoney.R.color.good_green)
+            )
+        }
         SummaryPerCategoryCard(summaryPerCategoryList)
+
     }
 }
 
+
 @Composable
-fun Summary(summaryAmount: Double, currency: String) {
+fun Summary(
+    modifier: Modifier = Modifier,
+    amount: Double,
+    currency: String,
+    text: String,
+    icon: Int,
+    iconColor: Color
+) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.elevatedCardColors()
             .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceDim,
+                            shape = MaterialTheme.shapes.small
+                        )
+                        .padding(5.dp),
+                    painter = painterResource(icon),
+                    tint = iconColor,
+                    contentDescription = null,
+                )
                 Text(
-                    stringResource(cc.n0th1ng.tripmoney.R.string.total_expenses),
+                    text,
                     style = MaterialTheme.typography.titleSmall
                 )
-                Text(
-                    "%.2f %s".format(summaryAmount, currency),
-                    style = MaterialTheme.typography.headlineLarge
-                )
+
             }
-            Row(
-                horizontalArrangement = Arrangement.Center
+            Text(
+                "%.2f %s".format(amount, currency),
+                style = MaterialTheme.typography.titleLarge,
             )
-            {
-                Icon(
-                    painter = painterResource(R.drawable.materialsymbols_ic_payment_arrow_down_outlined),
-                    contentDescription = null,
-                    modifier = Modifier.size(45.dp)
-                )
-
-            }
         }
-
     }
 }
 
@@ -217,7 +237,8 @@ fun Preview() {
             StatisticsScreen(
                 summaryPerCategoryList,
                 summaryAmount = 125.24,
-                Currencies.entries.random()
+                Currencies.entries.random(),
+                432.14
             )
         }
     }

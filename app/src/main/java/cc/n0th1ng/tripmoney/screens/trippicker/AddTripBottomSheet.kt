@@ -29,6 +29,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,9 +49,11 @@ import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.screens.addexpense.CurrencyButton
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.DatePicker
+import cc.n0th1ng.tripmoney.screens.listexpense.DateRangePicker
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
+import cc.n0th1ng.tripmoney.utils.pretty
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import io.ktor.http.hostIsIp
 import kotlinx.coroutines.CoroutineScope
@@ -98,8 +102,15 @@ fun AddTripBottomSheet(
         )
     }
 
+    var endDate by remember {
+        mutableStateOf(
+            tripToEdit?.startDate ?: LocalDate.now()
+        )
+    }
+
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var budgetString by remember { mutableStateOf(tripToEdit?.budget?.toString() ?: "") }
     var currency by remember { mutableStateOf(tripToEdit?.currency ?: defaultCurrency.name) }
     var enableSave by remember { mutableStateOf(tripToEdit != null) }
 
@@ -129,6 +140,23 @@ fun AddTripBottomSheet(
             })
             Row(
                 modifier = Modifier.fillMaxWidth(0.9f),
+                horizontalArrangement = Arrangement.spacedBy(15.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BudgetInput(
+                    modifier = Modifier.fillMaxWidth(0.7f),
+                    budget = budgetString,
+                    onTextChange = { newBudget -> budgetString = newBudget })
+                CurrencyButton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(1f),
+                    onClick = { showCurrencyDialog = true }, text = currency
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(0.9f),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Button(
@@ -137,17 +165,14 @@ fun AddTripBottomSheet(
                         .weight(1f),
                     shape = MaterialTheme.shapes.medium,
                     onClick = { showDatePicker = true }) {
+                    val startDateFormatted = startDate.pretty()
+                    val endDateFormatted = endDate.pretty()
                     Text(
-                        text = startDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                        text = "$startDateFormatted - $endDateFormatted",
                         fontSize = 17.sp
                     )
                 }
-                CurrencyButton(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(1f),
-                    onClick = { showCurrencyDialog = true }, text = currency
-                )
+
 
             }
 
@@ -157,7 +182,13 @@ fun AddTripBottomSheet(
                 shape = MaterialTheme.shapes.medium,
                 onClick = {
                     val trip =
-                        Trip(name = name, startDate = startDate, currency = currency)
+                        Trip(
+                            name = name,
+                            startDate = startDate,
+                            endDate = endDate,
+                            currency = currency,
+                            budget = budgetString.toDoubleOrNull() ?: 0.0
+                        )
 
                     onSave(if (tripToEdit == null) trip else trip.copy(id = tripToEdit.id))
                 }) {
@@ -182,10 +213,15 @@ fun AddTripBottomSheet(
     }
 
     if (showDatePicker) {
-        DatePicker(startDate, onDismiss = { showDatePicker = false }, onConfirm = { newDate ->
-            startDate = newDate
-            showDatePicker = false
-        })
+        DateRangePicker(
+            startDate = startDate,
+            endDate = endDate,
+            onDismiss = { showDatePicker = false },
+            onConfirm = { newStartDate, newEndDate ->
+                startDate = newStartDate
+                endDate = newEndDate
+                showDatePicker = false
+            })
     }
 }
 
@@ -198,6 +234,28 @@ fun NameInput(name: String, onTextChange: (String) -> Unit) {
             text = newText
             onTextChange(text)
         }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+    )
+}
+
+@Composable
+fun BudgetInput(modifier: Modifier = Modifier, budget: String, onTextChange: (String) -> Unit) {
+    var text by remember { mutableStateOf(budget) }
+    OutlinedTextField(
+        placeholder = { Text("0.0") },
+        modifier = modifier,
+        label = { Text(stringResource(R.string.budget)) },
+        value = text,
+        onValueChange = { newText ->
+            val regex = Regex("^\\d*\\.?\\d{0,2}$")
+            if (regex.matches(newText)) {
+                text = newText
+                onTextChange(text)
+            }
+        },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Done
+        )
     )
 }
 
@@ -231,7 +289,8 @@ fun PreviewAddTripBottomSheetEditTrip() {
         AddTripBottomSheet(
             {},
             {},
-            Trip(1, "Włochy", LocalDate.parse("2025-01-02"), "PLN"),
+            Trip(1, "Włochy", LocalDate.parse("2025-01-02"),
+                LocalDate.parse("2025-01-15"), "PLN", budget = 0.0),
             sheetState,
             defaultCurrency = Currencies.entries.random()
         )

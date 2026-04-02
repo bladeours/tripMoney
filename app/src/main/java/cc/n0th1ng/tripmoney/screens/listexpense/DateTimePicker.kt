@@ -5,14 +5,14 @@ import androidx.annotation.RequiresApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DatePickerState
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,16 +20,54 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
 import cc.n0th1ng.tripmoney.R.*
-import java.sql.Time
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Calendar
+
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateRangePicker(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate, LocalDate) -> Unit
+) {
+    val datePickerState =
+        rememberDateRangePickerState(initialSelectedStartDateMillis = startDate.toEpochMilli(),
+            initialSelectedEndDateMillis = endDate.toEpochMilli())
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                val selectedStartDateMillis = datePickerState.selectedStartDateMillis
+                val selectedEndDateMillis = datePickerState.selectedEndDateMillis
+                if (selectedStartDateMillis != null && selectedEndDateMillis != null) {
+                    val selectedStartDate = Instant.ofEpochMilli(selectedStartDateMillis)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                    val selectedEndDate =
+                        Instant.ofEpochMilli(selectedEndDateMillis).atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                    onConfirm(selectedStartDate, selectedEndDate)
+                }
+            }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(string.cancel)) }
+        }
+    ) {
+        DateRangePicker(state = datePickerState, showModeToggle = false,
+            title = {})
+    }
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)

@@ -40,16 +40,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     private val tripRepo: TripRepository
 ) : ViewModel() {
 
-    fun archiveCategory(category: Category) {
-        viewModelScope.launch {
-            categoryRepo.save(category.copy(archived = true))
-        }
-    }
-
-    fun deArchiveCategory(category: Category) {
-        viewModelScope.launch {
-            categoryRepo.save(category.copy(archived = false))
-        }
+    fun getBudgetLeft(tripId: Int): Double {
+        return expenseRepo.getBudgetLeft(tripId)
     }
 
     fun getExpensesDtoPaged(tripId: Int, filter: String = ""): Flow<PagingData<ExpenseDto>> =

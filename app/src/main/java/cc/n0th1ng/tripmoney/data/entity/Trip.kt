@@ -15,11 +15,17 @@ data class Trip(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo("name") val name: String,
     @ColumnInfo("start_date") val startDate: LocalDate,
+    @ColumnInfo("end_date") val endDate: LocalDate,
     @ColumnInfo("currency") val currency: String,
-    @ColumnInfo("budget") val budget: Double
-){
+    @ColumnInfo("budget") val budget: Double = 0.0
+) {
     companion object {
         @RequiresApi(Build.VERSION_CODES.O)
-        val DUMMY = Trip(-1, "", LocalDate.now(), Currencies.default().name, budget = 0.0)
+        val DUMMY = Trip(
+            -1,
+            "",
+            LocalDate.now(),
+            endDate = LocalDate.now(), Currencies.default().name, budget = 0.0,
+        )
     }
 }

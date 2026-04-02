@@ -5,15 +5,23 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
 import cc.n0th1ng.tripmoney.data.repository.PreferencesRepository
 import cc.n0th1ng.tripmoney.utils.Currencies
+import dagger.Provides
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.scopes.ViewScoped
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,6 +30,7 @@ class SettingsViewModel @Inject constructor(
     private val repo: PreferencesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+
     private val uiModeManager: UiModeManager =
         context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
     val theme = repo.themeFlow
@@ -30,6 +39,18 @@ class SettingsViewModel @Inject constructor(
             SharingStarted.WhileSubscribed(5000),
             AppTheme.SYSTEM
         )
+
+    val autoOpenStartupPref = repo.currentAddExpenseSwitchFlow
+        .take(1)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    val addExpenseSwitch = repo.currentAddExpenseSwitchFlow.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), false
+    )
 
     val currentTrip = repo.currentTripFlow.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000),
@@ -47,6 +68,11 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setCurrentAddExpenseSwitch(value: Boolean) {
+        viewModelScope.launch {
+            repo.saveAddExpenseSwitch(value)
+        }
+    }
     fun setCurrentTrip(tripId: Int) {
         viewModelScope.launch {
             repo.saveCurrentTrip(tripId)
@@ -76,6 +102,4 @@ class SettingsViewModel @Inject constructor(
         }
     }
 }
-
-
 

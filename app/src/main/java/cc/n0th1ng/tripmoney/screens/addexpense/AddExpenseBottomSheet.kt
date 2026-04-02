@@ -2,13 +2,10 @@ package cc.n0th1ng.tripmoney.screens.addexpense
 
 import android.annotation.SuppressLint
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +31,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -47,7 +43,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -76,8 +71,6 @@ import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import com.composables.icons.materialsymbols.outlined.R.drawable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -104,7 +97,7 @@ fun AddExpenseBottomSheet(
         onDismiss = onDismiss,
         expenseDtoToEdit = expenseDtoToEdit,
         state = state,
-        currentTrip = currentTrip!!,
+        currentTrip = currentTrip ?: Trip.DUMMY,
         categories = categories
     )
 }
@@ -128,10 +121,14 @@ fun AddExpenseBottomSheet(
 
     var amount by remember {
         mutableStateOf(
-            expenseDtoToEdit?.expense?.amount?.toString() ?: "0.00"
+            "%.2f".format(expenseDtoToEdit?.expense?.amount ?: 0.00)
         )
     }
-    var equationResult by remember { mutableDoubleStateOf(0.0) }
+    var equationResult by remember {
+        mutableDoubleStateOf(
+            expenseDtoToEdit?.expense?.amount ?: 0.00
+        )
+    }
     val dummyFocusRequester = remember { FocusRequester() }
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showCategoryDialog by remember { mutableStateOf(false) }
@@ -193,7 +190,7 @@ fun AddExpenseBottomSheet(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (amount.contains(Regex("[+\\/*-]\\d+"))) "%.2f".format(
+                            text = if (amount.contains(Regex("[+/*-]\\d+"))) "%.2f".format(
                                 equationResult
                             ) else "",
                             fontSize = 14.sp,
@@ -240,7 +237,7 @@ fun AddExpenseBottomSheet(
                 NumberKeyboard(
                     modifier = Modifier.fillMaxWidth(),
                     onOperatorClick = { operator ->
-                        if (amount.isDoubleTwoDigitsOrEquation() && amount.contains(Regex("[+\\/*-]\\d+"))) {
+                        if (amount.isDoubleTwoDigitsOrEquation() && amount.contains(Regex("[+/*-]\\d+"))) {
                             amount = evaluate(amount).toString()
                         }
                         val newText = amount + operator
@@ -369,7 +366,7 @@ private inline fun String.indexOfFirstIndexed(predicate: (index: Int, Char) -> B
 }
 
 private fun String.isDoubleTwoDigitsOrEquation(): Boolean {
-    return this != "0.00" && this.matches(Regex("^(-?(0\\.?|0\\.\\d{1,2}|[1-9]\\d*(\\.\\d{0,2})?))([+\\/*-](0\\.?|0\\.\\d{1,2}|[1-9]\\d*(\\.\\d{0,2})?)?)?$"))
+    return this != "0.00" && this.matches(Regex("^(-?(0\\.?|0\\.\\d{1,2}|[1-9]\\d*(\\.\\d{0,2})?))([+/*-](0\\.?|0\\.\\d{1,2}|[1-9]\\d*(\\.\\d{0,2})?)?)?$"))
 }
 
 @Composable
@@ -518,7 +515,6 @@ fun KeyboardButton(
     text: String? = null,
     icon: Painter? = null,
     onClick: () -> Unit,
-    enabled: Boolean = true,
     onLongClick: () -> Unit = {},
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
@@ -574,6 +570,7 @@ fun PreviewAddExpenseDisabled() {
                 1,
                 "Trip",
                 LocalDate.parse("2020-01-01"),
+                LocalDate.parse("2020-01-15"),
                 Currencies.entries.random().name
             ),
             categories = categoriesToPreview
@@ -607,13 +604,17 @@ fun PreviewAddExpenseEnabled() {
                     tripId = 1
                 ),
                 category = categoriesToPreview[0],
-                Trip(1, "Włochy", LocalDate.parse("2025-01-02"), "PLN")
+                Trip(
+                    1, "Włochy", LocalDate.parse("2025-01-02"),
+                    LocalDate.parse("2025-01-15"), "PLN"
+                )
             ),
             state = sheetState,
             currentTrip = Trip(
                 1,
                 "Trip",
                 LocalDate.parse("2020-01-01"),
+                LocalDate.parse("2020-01-11"),
                 Currencies.entries.random().name
             ),
             categories = categoriesToPreview

@@ -1,10 +1,12 @@
 package cc.n0th1ng.tripmoney.data.repository
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import cc.n0th1ng.tripmoney.data.repository.PreferenceKeys.ADD_EXPENSE_SWITCH
 import cc.n0th1ng.tripmoney.data.repository.PreferenceKeys.APP_THEME
 import cc.n0th1ng.tripmoney.data.repository.PreferenceKeys.CURRENT_TRIP
 import cc.n0th1ng.tripmoney.data.repository.PreferenceKeys.DEFAULT_CURRENCY
@@ -23,6 +25,7 @@ object PreferenceKeys {
     val APP_THEME = intPreferencesKey("app_theme")
     val CURRENT_TRIP = intPreferencesKey("current_trip")
     val DEFAULT_CURRENCY = stringPreferencesKey("default_currency")
+    val ADD_EXPENSE_SWITCH = booleanPreferencesKey("add_expense_switch")
 
 }
 
@@ -32,6 +35,13 @@ class PreferencesRepository @Inject constructor(@ApplicationContext private val 
             val value = prefs[APP_THEME]
                 ?: AppTheme.SYSTEM.value
             AppTheme.fromValue(value)
+        }
+
+    val currentAddExpenseSwitchFlow: Flow<Boolean> =
+        context.preferencesDataStore.data.map { prefs ->
+            val value = prefs[ADD_EXPENSE_SWITCH]
+                ?: false
+            value
         }
 
     val currentTripFlow: Flow<Int> =
@@ -58,6 +68,12 @@ class PreferencesRepository @Inject constructor(@ApplicationContext private val 
     suspend fun saveTheme(theme: AppTheme) {
         context.preferencesDataStore.edit { prefs ->
             prefs[APP_THEME] = theme.value
+        }
+    }
+
+    suspend fun saveAddExpenseSwitch(value: Boolean) {
+        context.preferencesDataStore.edit { prefs ->
+            prefs[ADD_EXPENSE_SWITCH] = value
         }
     }
 
