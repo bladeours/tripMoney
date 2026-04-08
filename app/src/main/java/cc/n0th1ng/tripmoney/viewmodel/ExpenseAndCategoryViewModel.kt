@@ -8,6 +8,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
+import cc.n0th1ng.tripmoney.Filter
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
@@ -44,16 +45,17 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         return expenseRepo.getBudgetLeft(tripId)
     }
 
-    fun getExpensesDtoPaged(tripId: Int, filter: String = ""): Flow<PagingData<ExpenseDto>> =
-        expenseRepo.getExpensesDtoPaged(tripId, filter).cachedIn(viewModelScope)
+    fun getExpensesDtoPaged(tripId: Int, search: String = "", filter: Filter = Filter()): Flow<PagingData<ExpenseDto>> =
+        expenseRepo.getExpensesDtoPaged(tripId, search, filter).cachedIn(viewModelScope)
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getExpensesWithHeadersPaged(
         tripId: Int,
-        filter: String = ""
+        search: String = "",
+        filter: Filter
     ): Flow<PagingData<ExpenseListItemUi>> {
-        val pagingFlow = getExpensesDtoPaged(tripId, filter)
-        val sumsFlow = getDailySums(tripId, filter)
+        val pagingFlow = getExpensesDtoPaged(tripId, search, filter)
+        val sumsFlow = getDailySums(tripId, search, filter)
         val tripFlow = tripRepo.getTrip(tripId)
         return combine(pagingFlow, sumsFlow, tripFlow) { pagingData, sums, trip ->
             val currency = trip?.currency ?: ""
@@ -85,8 +87,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }.cachedIn(viewModelScope)
     }
 
-    fun getExpensesDto(tripId: Int, filter: String = ""): Flow<List<ExpenseDto>> =
-        expenseRepo.getExpensesDto(tripId, filter)
+    fun getExpensesDto(tripId: Int, search: String = "", filter: Filter = Filter()): Flow<List<ExpenseDto>> =
+        expenseRepo.getExpensesDto(tripId, search, filter)
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun save(expense: Expense, trip: Trip) {
@@ -143,8 +145,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getDailySums(tripId: Int, filter: String): Flow<Map<LocalDate, Double>> {
-        return getExpensesDto(tripId, filter)
+    fun getDailySums(tripId: Int, search: String, filter: Filter): Flow<Map<LocalDate, Double>> {
+        return getExpensesDto(tripId, search, filter)
             .map { expenses ->
                 expenses.groupBy { it.expense.datetime.toLocalDate() }
                     .mapValues { (_, list) ->

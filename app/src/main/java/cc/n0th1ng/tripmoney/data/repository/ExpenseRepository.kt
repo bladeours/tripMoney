@@ -3,21 +3,16 @@ package cc.n0th1ng.tripmoney.data.repository
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
-import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import cc.n0th1ng.tripmoney.Filter
 import cc.n0th1ng.tripmoney.data.dao.ExpenseDao
-import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategoryRaw
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.utils.Currencies
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ExpenseRepository @Inject constructor(
@@ -39,15 +34,43 @@ class ExpenseRepository @Inject constructor(
         expenseDao.delete(expense)
     }
 
-    fun getExpensesDtoPaged(tripId: Int, filter: String): Flow<PagingData<ExpenseDto>> {
+    fun getExpensesDtoPaged(
+        tripId: Int,
+        search: String,
+        filter: Filter,
+    ): Flow<PagingData<ExpenseDto>> {
         return Pager(
             config = PagingConfig(pageSize = 50, enablePlaceholders = false),
-            pagingSourceFactory = { expenseDao.expenseDtoPaged(tripId, filter) }
+            pagingSourceFactory = {
+                val categoryIds = filter.categories.map { it.id }
+                expenseDao.expenseDtoPaged(
+                    tripId = tripId,
+                    search = search.takeIf { it.isNotBlank() },
+                    categoryIds = categoryIds,
+                    categoriesEmpty = categoryIds.isEmpty(),
+                    startAmount = filter.startAmount,
+                    endAmount = filter.endAmount
+                )
+
+            }
         ).flow
     }
 
-    fun getExpensesDto(tripId: Int, filter: String = ""): Flow<List<ExpenseDto>> {
-        return expenseDao.expenseDto(tripId, filter)
+    fun getExpensesDto(
+        tripId: Int,
+        search: String = "",
+        filter: Filter = Filter()
+    ): Flow<List<ExpenseDto>> {
+        val categoryIds = filter.categories.map { it.id }
+
+        return expenseDao.expenseDto(
+            tripId = tripId,
+            search = search.takeIf { it.isNotBlank() },
+            categoryIds = categoryIds,
+            categoriesEmpty = categoryIds.isEmpty(),
+            startAmount = filter.startAmount,
+            endAmount = filter.endAmount
+        )
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

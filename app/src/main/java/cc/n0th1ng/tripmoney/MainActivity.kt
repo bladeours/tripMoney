@@ -19,16 +19,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import androidx.paging.compose.collectAsLazyPagingItems
+import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.navigation.BottomNavigation
 import cc.n0th1ng.tripmoney.navigation.CustomNavigationDrawer
@@ -45,9 +41,7 @@ import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -69,6 +63,8 @@ class MainActivity : ComponentActivity() {
 fun NavigationDrawer() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
+    val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
+    val categories by expenseAndCategoryViewModel.getCategories().collectAsState(emptyList())
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
     val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
     val navController = rememberNavController()
@@ -76,7 +72,8 @@ fun NavigationDrawer() {
     val current = navBackStack?.destination?.route
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var filter by remember { mutableStateOf("") }
+    var search by remember { mutableStateOf("") }
+    var filter by remember { mutableStateOf(Filter()) }
     val autoOpenPref by settingsViewModel.autoOpenStartupPref.collectAsState()
     var hasHandledStartupOpen by rememberSaveable { mutableStateOf(false) }
     val shouldTriggerAutoOpen = autoOpenPref == true && !hasHandledStartupOpen
@@ -98,7 +95,11 @@ fun NavigationDrawer() {
                         }
                     },
                     isSearchable = current == Screens.LIST_EXPENSE,
-                    onFilterChange = { newFilter -> filter = newFilter })
+                    onSearchChange = { newSearch -> search = newSearch },
+                    onFilterChange = { newFilter -> filter = newFilter },
+                    categories = categories,
+                    filter = filter
+                )
             },
 
             bottomBar = { BottomNavigation(navController) }) { innerPadding ->
@@ -109,7 +110,7 @@ fun NavigationDrawer() {
             ) {
                 composable(Screens.LIST_EXPENSE) {
                     ListExpenseScreen(
-                        filter,
+                        filter = filter, search = search,
                         initialAutoOpen = shouldTriggerAutoOpen,
                         onAutoOpenConsumed = { hasHandledStartupOpen = true })
                 }
@@ -128,5 +129,25 @@ fun NavigationDrawer() {
             }
         }
     }
+}
 
+data class Filter(
+    val categories: List<Category> = emptyList(), val startAmount: Double = 0.0,
+    val endAmount: Double = Double.MAX_VALUE
+) {
+    fun with(category: Category): Filter {
+        return this.copy(categories = categories + category)
+    }
+
+    fun withStartAmount(amount: Double): Filter {
+        return this.copy(startAmount = amount)
+    }
+
+    fun withEndAmount(amount: Double): Filter {
+        return this.copy(endAmount = amount)
+    }
+
+    fun without(category: Category): Filter {
+        return this.copy(categories = categories - category)
+    }
 }

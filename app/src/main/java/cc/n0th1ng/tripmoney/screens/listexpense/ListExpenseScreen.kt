@@ -55,6 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import cc.n0th1ng.tripmoney.Filter
 import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
@@ -80,16 +81,19 @@ import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ListExpenseScreen(filter: String,
-                      initialAutoOpen: Boolean,
-                      onAutoOpenConsumed: () -> Unit ) {
+fun ListExpenseScreen(
+    filter: Filter,
+    search: String,
+    initialAutoOpen: Boolean,
+    onAutoOpenConsumed: () -> Unit
+) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
     val currentTripId by settingsViewModel.currentTrip.collectAsState()
     val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val expensesFlow =
-        expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId, filter)
+        expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId, search, filter)
     val isRecalculatingRate by tripViewModel.isRecalculating.collectAsState()
 
     ListExpenseScreen(

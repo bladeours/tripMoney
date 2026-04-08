@@ -30,6 +30,19 @@ android {
                 "proguard-rules.pro"
             )
         }
+        create("benchmark") {
+            initWith(getByName("release"))
+
+            // 🔑 Critical settings for Macrobenchmark
+            isDebuggable = false
+            isMinifyEnabled = false
+            isShrinkResources = false
+
+            // Use release signing if needed (optional for local)
+            signingConfig = signingConfigs.getByName("debug")
+
+            matchingFallbacks += listOf("release")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -95,7 +108,7 @@ dependencies {
 
     implementation("androidx.paging:paging-runtime:3.4.2")
     implementation("androidx.paging:paging-compose:3.4.2")
-    implementation("androidx.datastore:datastore-preferences:1.2.1")
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.icons.material.symbols.outlined.android)
 
