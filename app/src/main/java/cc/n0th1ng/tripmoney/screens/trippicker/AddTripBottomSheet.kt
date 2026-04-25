@@ -104,7 +104,7 @@ fun AddTripBottomSheet(
 
     var endDate by remember {
         mutableStateOf(
-            tripToEdit?.startDate ?: LocalDate.now()
+            tripToEdit?.endDate ?: LocalDate.now()
         )
     }
 

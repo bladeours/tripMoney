@@ -39,4 +39,5 @@
     <string name="budget">Budget</string>
     <string name="money_left">Money left</string>
     <string name="add_expense_settings">Open add expense form on startup</string>
+    <string name="yesterday">Yesterday</string>
 </resources>

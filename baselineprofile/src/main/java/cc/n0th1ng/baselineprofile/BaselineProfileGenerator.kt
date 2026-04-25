@@ -26,7 +26,7 @@ class BaselineProfileGenerator {
             packageName = "cc.n0th1ng.tripmoney",
             includeInStartupProfile = true
         ) {
-            pressHome()
+//            pressHome()
             startActivityAndWait()
 
             device.waitForIdle()
