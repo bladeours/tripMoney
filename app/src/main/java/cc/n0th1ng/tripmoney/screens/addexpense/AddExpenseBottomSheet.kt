@@ -487,7 +487,7 @@ fun NumberKeyboard(
                             onLongClick = onLongBackspaceClick
                         )
 
-                        "+", "÷", "-", "×" -> KeyboardButton(
+                        "+", "÷", "−", "×" -> KeyboardButton(
                             text = key,
                             onClick = { onOperatorClick(key) },
                             modifier = Modifier.weight(1f),
@@ -541,7 +541,7 @@ fun KeyboardButton(
 }
 
 val keyboard = listOf(
-    listOf("+", "-", "×", "÷"),
+    listOf("+", "−", "×", "÷"),
     listOf("1", "2", "3"),
     listOf("4", "5", "6"),
     listOf("7", "8", "9"),

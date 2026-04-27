@@ -363,7 +363,7 @@ fun ExpenseCard(
         colors = CardDefaults.elevatedCardColors()
             .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier
-            .fillMaxWidth(0.9f)
+            .fillMaxWidth(0.95f)
             .height(70.dp)
             .combinedClickable(
                 enabled = true,

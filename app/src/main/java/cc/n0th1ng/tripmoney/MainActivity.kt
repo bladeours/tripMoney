@@ -150,4 +150,8 @@ data class Filter(
     fun without(category: Category): Filter {
         return this.copy(categories = categories - category)
     }
+
+    fun isDefault(): Boolean {
+        return this.categories.isEmpty() && startAmount == 0.0 && endAmount == Double.MAX_VALUE
+    }
 }

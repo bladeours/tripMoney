@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import cc.n0th1ng.tripmoney.data.entity.Category
@@ -18,6 +19,8 @@ interface ExpenseDao {
     suspend fun insert(expense: Expense)
 
 
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
     @Query(
         """
     SELECT * FROM expense
@@ -87,13 +90,17 @@ interface ExpenseDao {
 
     @Query(
         """
-    SELECT trip.budget - IFNULL(SUM(expense.amount * expense.rate), 0)
+    SELECT
+        CASE
+            WHEN trip.budget = 0 THEN NULL
+            ELSE trip.budget - IFNULL(SUM(expense.amount * expense.rate), 0)
+        END
     FROM trip
     LEFT JOIN expense ON expense.trip_id = trip.id
     WHERE trip.id = :tripId
     """
     )
-    fun budgetLeft(tripId: Int): Double
+    fun budgetLeft(tripId: Int): Double?
 
     @Delete
     suspend fun delete(expense: Expense)

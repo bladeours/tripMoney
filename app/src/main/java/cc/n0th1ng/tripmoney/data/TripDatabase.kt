@@ -14,9 +14,7 @@ import cc.n0th1ng.tripmoney.data.dao.TripDao
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.ExchangeRate
 import cc.n0th1ng.tripmoney.data.entity.Expense
-import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.data.entity.Trip
-import cc.n0th1ng.tripmoney.screens.listexpense.toEpochMilli
 import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.utils.Icons
 import cc.n0th1ng.tripmoney.utils.colors
@@ -26,9 +24,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Delay
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -36,7 +32,6 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import javax.inject.Singleton
 import kotlin.random.Random
-import kotlin.random.nextInt
 
 @Database(
     entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class],
@@ -176,6 +171,51 @@ private class DatabasePrepopulator(
             icon = Icons.GROCERIES,
             color = colors.random()
         ),
+        Category(
+            name = "Zakupy1",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy2",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy3",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy4",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy5",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy6",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy7",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy8",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
+        Category(
+            name = "Zakupy9 ",
+            icon = Icons.GROCERIES,
+            color = colors.random()
+        ),
     )
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -193,7 +233,7 @@ private class DatabasePrepopulator(
 
 
         val expense = Expense(
-            categoryId = Random.nextInt(1, 5),
+            categoryId = Random.nextInt(1, sampleCategories.size),
             tripId = 1,
             amount = Random.nextDouble(0.1, 300.0),
             currency = Currencies.entries.random().name,

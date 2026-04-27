@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -32,7 +34,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
-import androidx.core.graphics.toColorLong
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
 import cc.n0th1ng.tripmoney.data.entity.Category
@@ -73,7 +74,7 @@ fun StatisticsScreen(
     summaryPerCategoryList: List<SummaryPerCategory>,
     summaryAmount: Double,
     tripCurrency: Currencies,
-    moneyLeft: Double
+    moneyLeft: Double?
 ) {
     Column(
         modifier = Modifier
@@ -104,7 +105,7 @@ fun StatisticsScreen(
 @Composable
 fun Summary(
     modifier: Modifier = Modifier,
-    amount: Double,
+    amount: Double?,
     currency: String,
     text: String,
     icon: Int,
@@ -117,7 +118,8 @@ fun Summary(
     ) {
         Column(
             modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -141,7 +143,8 @@ fun Summary(
 
             }
             Text(
-                "%.2f %s".format(amount, currency),
+                if (amount == null) "∞" else
+                    "%.2f %s".format(amount, currency),
                 style = MaterialTheme.typography.titleLarge,
             )
         }
@@ -156,7 +159,10 @@ fun SummaryPerCategoryCard(summaryPerCategoryList: List<SummaryPerCategory>) {
             .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
-            modifier = Modifier.padding(15.dp),
+            modifier = Modifier
+                .padding(15.dp)
+                .verticalScroll(rememberScrollState()),
+
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             summaryPerCategoryList.forEach {
@@ -204,7 +210,7 @@ fun CategoryCard(modifier: Modifier = Modifier, summaryPerCategory: SummaryPerCa
         ) {
             Box(
                 modifier = Modifier
-                    .height(40.dp)
+                    .height(30.dp)
                     .fillMaxWidth(0.12f + (0.90f - 0.12f) * summaryPerCategory.percent)
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.primary)
@@ -213,7 +219,7 @@ fun CategoryCard(modifier: Modifier = Modifier, summaryPerCategory: SummaryPerCa
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(11.dp)
+                        .padding(vertical = 5.dp, horizontal = 10.dp)
                 ) {
                     Text(
                         "%d%%".format((summaryPerCategory.percent * 100).toInt()),

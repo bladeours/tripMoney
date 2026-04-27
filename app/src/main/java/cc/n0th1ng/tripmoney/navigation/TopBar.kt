@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -21,7 +22,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -38,7 +38,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import cc.n0th1ng.tripmoney.Filter
@@ -121,7 +120,11 @@ fun TopBar(
                 ) {
                     Icon(
                         tint = MaterialTheme.colorScheme.primary,
-                        painter = painterResource(drawable.materialsymbols_ic_filter_alt_outlined),
+                        painter = painterResource(
+                            if (filter.isDefault())
+                                drawable.materialsymbols_ic_filter_alt_outlined
+                            else com.composables.icons.materialsymbols.outlinedfilled.R.drawable.materialsymbols_ic_filter_alt_outlined_filled
+                        ),
                         contentDescription = null,
                         modifier = Modifier.clickable(onClick = {
                             showFilter = true
@@ -150,7 +153,11 @@ fun TopBar(
                 showFilter = false
             },
             categories = categories,
-            filter = filter
+            filter = filter,
+            onClear = {
+                onFilterChange(Filter())
+                showFilter = false
+            }
         )
 
 
@@ -161,6 +168,7 @@ fun TopBar(
 fun FilterDialog(
     onDismiss: () -> Unit,
     onSave: (Filter) -> Unit,
+    onClear: () -> Unit,
     categories: List<Category>,
     filter: Filter
 ) {
@@ -168,20 +176,28 @@ fun FilterDialog(
     var fromAmountString by remember { mutableStateOf(filter.startAmount.toString()) }
     var toAmountString by remember { mutableStateOf(filter.endAmount.toString()) }
     AlertDialog(
-        onDismiss, {
+        onDismissRequest = onDismiss,
+        dismissButton = {
+            Button(
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                enabled = true,
+                onClick = onClear
+            ) { Text(stringResource(R.string.clear)) }
+        },
+        confirmButton = {
             Button(
                 enabled = true,
                 onClick = {
                     onSave(
                         filter.withStartAmount(fromAmountString.safeToDouble())
-                            .withEndAmount( toAmountString.safeToDouble())
+                            .withEndAmount(toAmountString.safeToDouble())
                     )
                 }) { Text(stringResource(R.string.save)) }
         }, title = { Text("Filter") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(text = "Categories")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     categories.forEach {
                         FilterChip(selected = filter.categories.contains(it), onClick = {
                             filter = if (filter.categories.contains(it)) {
@@ -189,7 +205,12 @@ fun FilterDialog(
                             } else {
                                 filter.with(it)
                             }
-                        }, label = { Text(text = it.name) })
+                        }, label = {
+                            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                Icon(painterResource(it.icon.resource), contentDescription = null)
+                                Text(text = it.name)
+                            }
+                        })
                     }
                 }
                 AmountTextField(label = "from", onValueChange = { newText ->
@@ -265,13 +286,14 @@ fun PreviewFilterDialog() {
             onDismiss = {},
             onSave = {},
             categories = categoriesToPreview,
-            filter = Filter()
+            filter = Filter(),
+            onClear = {}
         )
     }
 }
 
 private fun String.safeToDouble(): Double {
-    if(this == "∞") return Double.MAX_VALUE
-    if(this.isEmpty()) return 0.0
+    if (this == "∞") return Double.MAX_VALUE
+    if (this.isEmpty()) return 0.0
     return this.toDouble()
 }

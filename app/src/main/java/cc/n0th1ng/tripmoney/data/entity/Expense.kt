@@ -5,6 +5,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import java.time.LocalDateTime
@@ -17,7 +18,8 @@ import java.time.LocalDateTime
         childColumns = arrayOf("category_id"),
         onUpdate = ForeignKey.CASCADE,
         onDelete = ForeignKey.CASCADE
-    )]
+    )],
+    indices = [Index(value = ["category_id"], unique = true)]
 )
 @Immutable
 data class Expense(

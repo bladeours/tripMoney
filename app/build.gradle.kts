@@ -33,7 +33,6 @@ android {
         create("benchmark") {
             initWith(getByName("release"))
 
-            // 🔑 Critical settings for Macrobenchmark
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
@@ -111,6 +110,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.icons.material.symbols.outlined.android)
+    implementation(libs.icons.material.symbols.outlined.filled.android)
 
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-android-compiler:2.57.1")
