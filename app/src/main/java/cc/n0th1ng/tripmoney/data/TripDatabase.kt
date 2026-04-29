@@ -212,7 +212,7 @@ private class DatabasePrepopulator(
             color = colors.random()
         ),
         Category(
-            name = "Zakupy9 ",
+            name = "Zakupy9",
             icon = Icons.GROCERIES,
             color = colors.random()
         ),

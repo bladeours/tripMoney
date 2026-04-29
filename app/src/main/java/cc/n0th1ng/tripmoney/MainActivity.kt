@@ -3,6 +3,7 @@ package cc.n0th1ng.tripmoney
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
@@ -11,6 +12,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +57,7 @@ class MainActivity : ComponentActivity() {
                 NavigationDrawer()
             }
         }
+
     }
 }
 
@@ -77,7 +80,7 @@ fun NavigationDrawer() {
     val autoOpenPref by settingsViewModel.autoOpenStartupPref.collectAsState()
     var hasHandledStartupOpen by rememberSaveable { mutableStateOf(false) }
     val shouldTriggerAutoOpen = autoOpenPref == true && !hasHandledStartupOpen
-
+    ReportDrawnWhen { !categories.isEmpty() }
     CustomNavigationDrawer(navController, drawerState) {
         Scaffold(
             topBar = {

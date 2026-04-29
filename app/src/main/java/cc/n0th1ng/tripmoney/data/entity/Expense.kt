@@ -19,7 +19,7 @@ import java.time.LocalDateTime
         onUpdate = ForeignKey.CASCADE,
         onDelete = ForeignKey.CASCADE
     )],
-    indices = [Index(value = ["category_id"], unique = true)]
+    indices = [Index(value = ["category_id"])]
 )
 @Immutable
 data class Expense(
