@@ -7,7 +7,6 @@ import androidx.room.Query
 import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
-import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import kotlinx.coroutines.flow.Flow
@@ -100,7 +99,7 @@ interface ExpenseDao {
     WHERE trip.id = :tripId
     """
     )
-    fun budgetLeft(tripId: Int): Double?
+    fun budgetLeft(tripId: Int): Flow<Double?>
 
     @Delete
     suspend fun delete(expense: Expense)

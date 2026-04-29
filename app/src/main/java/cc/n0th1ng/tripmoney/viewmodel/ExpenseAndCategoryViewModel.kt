@@ -29,9 +29,7 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
 import java.io.File
 import java.time.LocalDate
-import java.util.OptionalDouble
 import javax.inject.Inject
-import kotlin.collections.mapValues
 
 
 @HiltViewModel
@@ -42,7 +40,7 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     private val tripRepo: TripRepository
 ) : ViewModel() {
 
-    fun getBudgetLeft(tripId: Int): Double? {
+    fun getBudgetLeft(tripId: Int): Flow<Double?> {
         return expenseRepo.getBudgetLeft(tripId)
     }
 

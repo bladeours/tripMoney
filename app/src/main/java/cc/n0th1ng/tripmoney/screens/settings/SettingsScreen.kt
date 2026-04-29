@@ -1,6 +1,5 @@
 package cc.n0th1ng.tripmoney.screens.settings
 
-import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
@@ -36,34 +35,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import cc.n0th1ng.tripmoney.R.*
-import cc.n0th1ng.tripmoney.data.entity.Category
+import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
 import cc.n0th1ng.tripmoney.navigation.Screens
-import cc.n0th1ng.tripmoney.screens.listexpense.CategorySelectionDialog
 import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
-import cc.n0th1ng.tripmoney.screens.statistics.categories
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
-import cc.n0th1ng.tripmoney.utils.Icons
-import cc.n0th1ng.tripmoney.utils.saveCsv
 import cc.n0th1ng.tripmoney.utils.shareCsv
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import com.composables.icons.materialsymbols.outlined.R
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.Files
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
@@ -168,7 +156,7 @@ fun SettingsScreen(
                 iconResource = R.drawable.materialsymbols_ic_label_outlined
             )
             SettingsListItem(
-                onClick = onCategoriesClick,
+                onClick = {},
                 stringResource(string.add_expense),
                 supportingText = stringResource(string.add_expense_settings),
                 iconResource = R.drawable.materialsymbols_ic_payments_outlined,

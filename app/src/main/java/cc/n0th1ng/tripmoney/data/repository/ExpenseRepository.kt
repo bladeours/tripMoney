@@ -13,7 +13,6 @@ import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
 import cc.n0th1ng.tripmoney.utils.Currencies
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import java.util.OptionalDouble
 import javax.inject.Inject
 
 class ExpenseRepository @Inject constructor(
@@ -21,7 +20,7 @@ class ExpenseRepository @Inject constructor(
     private val exchangeRateRepository: ExchangeRateRepository
 ) {
 
-    fun getBudgetLeft(tripId: Int): Double? {
+    fun getBudgetLeft(tripId: Int): Flow<Double?> {
         return expenseDao.budgetLeft(tripId)
     }
 

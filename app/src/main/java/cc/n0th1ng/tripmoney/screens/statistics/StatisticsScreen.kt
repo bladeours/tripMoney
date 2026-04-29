@@ -60,11 +60,12 @@ fun StatisticsScreen() {
         .collectAsState(emptyList())
     val summaryAmount by expenseAndCategoryViewModel.getSummaryAmount(currentTripId)
         .collectAsState(0.0)
+    val moneyLeft by expenseAndCategoryViewModel.getBudgetLeft(currentTripId).collectAsState(null)
     StatisticsScreen(
         summaryPerCategoryList,
         summaryAmount,
         Currencies.valueOf(currentTrip?.currency ?: Currencies.default().name),
-        expenseAndCategoryViewModel.getBudgetLeft(currentTripId)
+        moneyLeft
     )
 }
 

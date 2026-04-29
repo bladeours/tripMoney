@@ -57,13 +57,13 @@ object DatabaseModule {
     fun provideTripDatabase(
         @ApplicationContext context: Context
     ): TripDatabase {
-        val db: TripDatabase = Room.inMemoryDatabaseBuilder(
-//        val db: TripDatabase = Room.databaseBuilder(
-//            name = "tripmoney_db",
+//        val db: TripDatabase = Room.inMemoryDatabaseBuilder(
+        val db: TripDatabase = Room.databaseBuilder(
+            name = "tripmoney_db",
             context = context,
             klass = TripDatabase::class.java,
         )
-            .allowMainThreadQueries() // TODO Remove in production!
+//            .allowMainThreadQueries() // TODO Remove in production!
             .fallbackToDestructiveMigration() // TODO Handle schema changes during dev
             .build()
 
