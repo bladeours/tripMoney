@@ -63,7 +63,6 @@ object DatabaseModule {
             context = context,
             klass = TripDatabase::class.java,
         )
-//            .allowMainThreadQueries() // TODO Remove in production!
             .fallbackToDestructiveMigration() // TODO Handle schema changes during dev
             .build()
 
