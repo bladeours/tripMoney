@@ -10,7 +10,9 @@ plugins {
 android {
     namespace = "cc.n0th1ng.tripmoney"
     compileSdk = 36
-
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "cc.n0th1ng.tripmoney"
         minSdk = 24

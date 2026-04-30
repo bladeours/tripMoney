@@ -7,6 +7,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import cc.n0th1ng.tripmoney.BuildConfig
 import cc.n0th1ng.tripmoney.data.dao.CategoryDao
 import cc.n0th1ng.tripmoney.data.dao.ExchangeRateDao
 import cc.n0th1ng.tripmoney.data.dao.ExpenseDao
@@ -34,8 +35,7 @@ import javax.inject.Singleton
 import kotlin.random.Random
 
 @Database(
-    entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class],
-    version = 1
+    entities = [Trip::class, Expense::class, Category::class, ExchangeRate::class], version = 1
 )
 @TypeConverters(Converters::class)
 abstract class TripDatabase : RoomDatabase() {
@@ -57,22 +57,28 @@ object DatabaseModule {
     fun provideTripDatabase(
         @ApplicationContext context: Context
     ): TripDatabase {
-//        val db: TripDatabase = Room.inMemoryDatabaseBuilder(
-        val db: TripDatabase = Room.databaseBuilder(
+        val builder = if (BuildConfig.DEBUG) Room.inMemoryDatabaseBuilder(
+            context = context, klass = TripDatabase::class.java
+        ) else Room.databaseBuilder(
             name = "tripmoney_db",
             context = context,
             klass = TripDatabase::class.java,
         )
-            .fallbackToDestructiveMigration() // TODO Handle schema changes during dev
-            .build()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            DatabasePrepopulator(
-                tripDao = db.tripDao(),
-                categoryDao = db.categoryDao(),
-                expenseDao = db.expenseDao()
-            ).prepopulate()
+        val db: TripDatabase =
+            builder.fallbackToDestructiveMigration() // TODO Handle schema changes during dev
+                .build()
+
+        if (BuildConfig.DEBUG) {
+            CoroutineScope(Dispatchers.IO).launch {
+                DatabasePrepopulator(
+                    tripDao = db.tripDao(),
+                    categoryDao = db.categoryDao(),
+                    expenseDao = db.expenseDao()
+                ).prepopulate()
+            }
         }
+
         return db
     }
 
@@ -146,74 +152,46 @@ private class DatabasePrepopulator(
 
     val sampleCategories = listOf(
         Category(
-            name = "Hotel",
-            icon = Icons.HOTEL,
-            color = colors.random()
+            name = "Hotel", icon = Icons.HOTEL, color = colors.random()
         ),
         Category(
-            name = "Jedzenie",
-            icon = Icons.RESTAURANT,
-            color = colors.random()
+            name = "Jedzenie", icon = Icons.RESTAURANT, color = colors.random()
         ),
         Category(
-            name = "Transport",
-            icon = Icons.FLIGHT,
-            color = colors.random()
+            name = "Transport", icon = Icons.FLIGHT, color = colors.random()
         ),
         Category(
-            name = "Rozrywka",
-            icon = Icons.ATTRACTION,
-            color = colors.random()
+            name = "Rozrywka", icon = Icons.ATTRACTION, color = colors.random()
         ),
         Category(
-            name = "Zakupy",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy1",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy1", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy2",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy2", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy3",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy3", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy4",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy4", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy5",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy5", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy6",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy6", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy7",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy7", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy8",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy8", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
-            name = "Zakupy9",
-            icon = Icons.GROCERIES,
-            color = colors.random()
+            name = "Zakupy9", icon = Icons.GROCERIES, color = colors.random()
         ),
     )
 
@@ -239,8 +217,7 @@ private class DatabasePrepopulator(
             note = if (i % 3 == 0) "Some note" else "",
             datetime = datetime,
             rate = if (Random.nextBoolean()) Random.nextDouble(
-                0.1,
-                5.0
+                0.1, 5.0
             ) else 1.0
         )
         expense
