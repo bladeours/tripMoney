@@ -13,7 +13,16 @@ class CategoryRepository @Inject constructor(private val categoryDao: CategoryDa
         categoryDao.insert(category)
     }
 
+    @WorkerThread
+    suspend fun delete(category: Category) {
+        categoryDao.delete(category)
+    }
+
     fun getCategories(): Flow<List<Category>> {
         return categoryDao.categories()
+    }
+
+    fun getArchivedCategories(): Flow<List<Category>> {
+        return categoryDao.archivedCategories()
     }
 }

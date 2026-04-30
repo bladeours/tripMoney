@@ -14,20 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import cc.n0th1ng.tripmoney.R
+import cc.n0th1ng.tripmoney.utils.Currencies
 
 @Composable
 fun CurrencySelectionDialog(
     onDismiss: () -> Unit,
     onCurrencySelected: (String) -> Unit,
-    selected: String,
-    listOfCurrencies: List<String>
+    selected: String
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.pick_currency)) },
         text = {
             Column {
-                listOfCurrencies.forEach { currency ->
+                Currencies.names().forEach { currency ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

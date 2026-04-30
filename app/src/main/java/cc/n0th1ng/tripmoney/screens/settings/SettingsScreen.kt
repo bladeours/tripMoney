@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,46 +31,161 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import cc.n0th1ng.tripmoney.R.*
+import androidx.navigation.NavHostController
+import cc.n0th1ng.tripmoney.R.string
+import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.data.repository.AppTheme
+import cc.n0th1ng.tripmoney.navigation.Screens
+import cc.n0th1ng.tripmoney.screens.listexpense.CurrencySelectionDialog
+import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
+import cc.n0th1ng.tripmoney.utils.AllPreviews
+import cc.n0th1ng.tripmoney.utils.Currencies
+import cc.n0th1ng.tripmoney.utils.shareCsv
+import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
+import com.composables.icons.materialsymbols.outlined.R
+import kotlinx.coroutines.launch
+import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(navController: NavHostController) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentTheme by settingsViewModel.theme.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
+    val currentAddExpenseSwitch by settingsViewModel.addExpenseSwitch.collectAsState()
+    val currentDefaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
+    val currentTripId by settingsViewModel.currentTrip.collectAsState()
+    val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
+    val tripViewModel: TripViewModel = hiltViewModel()
+    val currentTrip by tripViewModel.getTrip(currentTripId).collectAsState(Trip.DUMMY)
+    val context = LocalContext.current
+    val tripName = currentTrip?.name ?: ""
     val scope = rememberCoroutineScope()
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(15.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Card {
-            SettingsListItem(onClick = { showDialog = true }, stringResource(string.theme)) {
-                Text(
-                    if (isSystemInDarkTheme()) stringResource(string.dark_theme) else stringResource(
+
+    SettingsScreen(
+        currentDefaultCurrency = currentDefaultCurrency,
+        currentTheme = currentTheme,
+        onThemeSave = { settingsViewModel.setTheme(it) },
+        onCurrencySave = { settingsViewModel.setDefaultCurrency(it) },
+        onAddExpenseSwitch = {
+            settingsViewModel.setCurrentAddExpenseSwitch(it)
+        },
+        tripName = tripName,
+        onExportToCsv = {
+            scope.launch {
+                try {
+                    val safeTripName = tripName.replace(Regex("[^a-zA-Z0-9_]"), "_")
+                    val file = File(context.cacheDir, "$safeTripName.csv")
+                    expenseAndCategoryViewModel.generateCSVToFile(currentTripId, file)
+                    shareCsv(context, file)
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        },
+        onCategoriesClick = { navController.navigate(Screens.MANAGE_CATEGORIES) },
+        currentAddExpenseSwitch = currentAddExpenseSwitch
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+fun SettingsScreen(
+    currentDefaultCurrency: Currencies,
+    currentTheme: AppTheme,
+    onThemeSave: (AppTheme) -> Unit,
+    onCurrencySave: (Currencies) -> Unit,
+    tripName: String,
+    onExportToCsv: () -> Unit,
+    onCategoriesClick: () -> Unit,
+    onAddExpenseSwitch: (Boolean) -> Unit,
+    currentAddExpenseSwitch: Boolean
+) {
+
+    Scaffold { padding ->
+        var showThemeDialog by remember { mutableStateOf(false) }
+        var showCurrencyDialog by remember { mutableStateOf(false) }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            SettingsListItem(
+                onClick = { showCurrencyDialog = true },
+                headlineText = stringResource(string.default_currency),
+                supportingText = currentDefaultCurrency.name,
+                iconResource = R.drawable.materialsymbols_ic_currency_yen_outlined
+            )
+
+            SettingsCard(string.theme) {
+                SettingsListItem(
+                    onClick = { showThemeDialog = true },
+                    stringResource(string.theme),
+                    supportingText = if (isSystemInDarkTheme()) stringResource(string.dark_theme) else stringResource(
                         string.light_theme
-                    )
+                    ),
+                    iconResource = R.drawable.materialsymbols_ic_format_paint_outlined
+                )
+                SettingsListItem(
+                    onClick = { },
+                    "Pallete",
+                    supportingText = if (isSystemInDarkTheme()) stringResource(string.dark_theme) else stringResource(
+                        string.light_theme
+                    ),
+                    iconResource = R.drawable.materialsymbols_ic_palette_outlined
                 )
             }
-        }
-
-        if (showDialog) {
-            ThemeSelectionDialog(
-                onDismiss = { showDialog = false },
-                onThemeSelected = { theme ->
-                    settingsViewModel.setTheme(theme)
-                    showDialog = false
-                },
-                selected = currentTheme
+            SettingsListItem(
+                onClick = onExportToCsv,
+                stringResource(string.export_to_csv),
+                supportingText = stringResource(string.export_csv_subttext).format(tripName),
+                iconResource = R.drawable.materialsymbols_ic_csv_outlined
             )
+            SettingsListItem(
+                onClick = onCategoriesClick,
+                stringResource(string.categories),
+                supportingText = stringResource(string.manage_categories),
+                iconResource = R.drawable.materialsymbols_ic_label_outlined
+            )
+            SettingsListItem(
+                onClick = {},
+                stringResource(string.add_expense),
+                supportingText = stringResource(string.add_expense_settings),
+                iconResource = R.drawable.materialsymbols_ic_payments_outlined,
+                trailingContent = {
+                    Switch(checked = currentAddExpenseSwitch, onCheckedChange = {onAddExpenseSwitch(it)})
+                }
+            )
+
+            if (showThemeDialog) {
+                ThemeSelectionDialog(
+                    onDismiss = { showThemeDialog = false },
+                    onThemeSelected = { theme ->
+                        onThemeSave(theme)
+                        showThemeDialog = false
+                    },
+                    selected = currentTheme
+                )
+            }
+
+            if (showCurrencyDialog) {
+                CurrencySelectionDialog(
+                    onDismiss = { showCurrencyDialog = false },
+                    onCurrencySelected = { currencyString ->
+                        onCurrencySave(Currencies.valueOf(currencyString))
+                        showCurrencyDialog = false
+                    },
+                    currentDefaultCurrency.name
+                )
+            }
         }
     }
 }
@@ -77,7 +196,7 @@ fun SettingsCard(@StringRes title: Int = -1, content: @Composable () -> Unit) {
         if (title != -1) {
             Text(
                 text = stringResource(title),
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
                     .padding(start = 15.dp, top = 15.dp, end = 15.dp)
                     .alpha(0.6f)
@@ -92,17 +211,24 @@ fun SettingsListItem(
     onClick: () -> Unit,
     headlineText: String,
     trailingContent: @Composable () -> Unit = {},
-    supportingContent: @Composable () -> Unit
+    supportingText: String,
+    iconResource: Int,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(headlineText) },
-        supportingContent = supportingContent,
-        trailingContent = trailingContent,
-        modifier = Modifier
-            .clickable(true, onClick = onClick)
-    )
+    Card {
+        ListItem(
+            leadingContent = {
+                Icon(painter = painterResource(iconResource), contentDescription = null)
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            headlineContent = { Text(headlineText) },
+            supportingContent = { Text(supportingText) },
+            trailingContent = trailingContent,
+            modifier = Modifier
+                .clickable(true, onClick = onClick)
+        )
+    }
 }
+
 
 @Composable
 fun ThemeSelectionDialog(
@@ -145,4 +271,45 @@ fun ThemeSelectionDialog(
         },
         confirmButton = {}
     )
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@AllPreviews
+@Composable
+fun PreviewSettingsScreen() {
+    TripMoneyTheme {
+        SettingsScreen(
+            currentDefaultCurrency = Currencies.entries.random(),
+            currentTheme = AppTheme.entries.random(),
+            onThemeSave = {},
+            onCurrencySave = {},
+            onExportToCsv = {},
+            tripName = "Włochy",
+            onCategoriesClick = {},
+            onAddExpenseSwitch = {},
+            currentAddExpenseSwitch = false
+            )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@AllPreviews
+@Composable
+fun PreviewThemeSelectionDialog() {
+    TripMoneyTheme {
+        ThemeSelectionDialog(onDismiss = {}, onThemeSelected = {}, AppTheme.SYSTEM)
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@AllPreviews
+@Composable
+fun PreviewCurrencySelectionDialog() {
+    TripMoneyTheme {
+        CurrencySelectionDialog(
+            onDismiss = {},
+            onCurrencySelected = {},
+            selected = Currencies.entries.random().name
+        )
+    }
 }

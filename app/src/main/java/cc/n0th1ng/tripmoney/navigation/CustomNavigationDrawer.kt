@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import cc.n0th1ng.tripmoney.R.string
 import com.composables.icons.materialsymbols.outlined.R
 import kotlinx.coroutines.launch
 
@@ -32,7 +33,7 @@ fun CustomNavigationDrawer(
                 Text("Trip Money", modifier = Modifier.padding(16.dp))
                 HorizontalDivider()
                 NavigationDrawerItem(
-                    label = { Text(text = "Pick trip") },
+                    label = { Text(text = stringResource(string.pick_trip)) },
                     selected = false,
                     onClick = {
                         navController.navigate(Screens.TRIP_PICKER)
@@ -48,7 +49,7 @@ fun CustomNavigationDrawer(
                         )
                     })
                 NavigationDrawerItem(
-                    label = { Text(text = "List of expenses") },
+                    label = { Text(text = stringResource(string.list_of_expenses)) },
                     selected = false,
                     onClick = {
                         navController.navigate(Screens.LIST_EXPENSE)
@@ -64,7 +65,7 @@ fun CustomNavigationDrawer(
                         )
                     })
                 NavigationDrawerItem(
-                    label = { Text(text = "Statistics") },
+                    label = { Text(text = stringResource(string.statistics)) },
                     selected = false,
                     onClick = {
                         navController.navigate(Screens.STATISTICS)
@@ -80,7 +81,7 @@ fun CustomNavigationDrawer(
                         )
                     })
                 NavigationDrawerItem(
-                    label = { Text(text = "Settings") },
+                    label = { Text(text = stringResource(string.settings)) },
                     selected = false,
                     onClick = {
                         navController.navigate(Screens.SETTINGS)
@@ -88,7 +89,7 @@ fun CustomNavigationDrawer(
                             drawerState.close()
                         }
                     },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "settings") }
+                    icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(string.settings)) }
                 )
             }
         }) { content() }
@@ -99,4 +100,5 @@ object Screens {
     const val TRIP_PICKER = "trip_picker"
     const val STATISTICS = "statistics"
     const val SETTINGS = "settings"
+    const val MANAGE_CATEGORIES = "manage_categories"
 }
