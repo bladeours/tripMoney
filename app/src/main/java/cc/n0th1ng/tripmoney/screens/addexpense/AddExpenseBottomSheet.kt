@@ -115,9 +115,9 @@ fun AddExpenseBottomSheet(
 ) {
     val currentTripId = currentTrip.id
 
-    if (categories.isEmpty()) {
-        return
-    }
+//    if (categories.isEmpty()) {
+//        return
+//    }
 
     var amount by remember {
         mutableStateOf(
@@ -138,7 +138,11 @@ fun AddExpenseBottomSheet(
             expenseDtoToEdit?.expense?.currency ?: currentTrip.currency
         )
     }
-    var category by remember { mutableStateOf(expenseDtoToEdit?.category ?: categories[0]) }
+    var category by remember {
+        mutableStateOf<Category?>(
+            expenseDtoToEdit?.category ?: if (categories.isEmpty()) null else categories[0]
+        )
+    }
     var datetime by remember {
         mutableStateOf(
             expenseDtoToEdit?.expense?.datetime ?: LocalDateTime.now()
@@ -273,14 +277,14 @@ fun AddExpenseBottomSheet(
 
                 SaveButton(
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = enableSave,
+                    enabled = enableSave && category != null,
                     onClick = {
                         val expenseToSave = Expense(
                             amount = equationResult,
                             currency = currency,
                             note = note,
                             datetime = datetime,
-                            categoryId = category.id,
+                            categoryId = category!!.id,
                             tripId = currentTripId
                         )
                         onSave(
@@ -410,7 +414,7 @@ fun CurrencyButton(modifier: Modifier = Modifier, onClick: () -> Unit, text: Str
 }
 
 @Composable
-fun CategoryButton(onClick: () -> Unit, category: Category, modifier: Modifier = Modifier) {
+fun CategoryButton(onClick: () -> Unit, category: Category?, modifier: Modifier = Modifier) {
     Button(
         contentPadding = PaddingValues(0.dp),
         onClick = onClick,
@@ -422,25 +426,21 @@ fun CategoryButton(onClick: () -> Unit, category: Category, modifier: Modifier =
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
     ) {
-//        Row(modifier = modifier.fillMaxWidth()) {
-        Icon(
-            tint = Color(category.color.toColorInt()),
-            modifier = Modifier
-                .size(30.dp)
-//                    .background(
-//                        color = MaterialTheme.colorScheme.prima,
-//                        shape = MaterialTheme.shapes.small
-//                    )
-                .padding(end = 10.dp),
-            painter = painterResource(category.icon.resource),
-            contentDescription = stringResource(R.string.category),
-        )
+        if (category != null) {
+            Icon(
+                tint = Color(category.color.toColorInt()),
+                modifier = Modifier
+                    .size(30.dp)
+                    .padding(end = 10.dp),
+                painter = painterResource(category.icon.resource),
+                contentDescription = stringResource(R.string.category),
+            )
+        }
         Text(
-            text = category.name,
+            text = category?.name ?: stringResource(R.string.pick_category),
             style = MaterialTheme.typography.titleMedium
         )
 
-//        }
     }
 }
 

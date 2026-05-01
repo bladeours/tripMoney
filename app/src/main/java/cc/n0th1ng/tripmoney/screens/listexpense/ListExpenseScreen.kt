@@ -47,11 +47,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -100,6 +101,7 @@ fun ListExpenseScreen(
     val isRecalculatingRate by tripViewModel.isRecalculating.collectAsState()
 
     ListExpenseScreen(
+        currentTrip = currentTrip,
         expensesFlow = expensesFlow,
         onSaveExpense = { expenseAndCategoryViewModel.save(it, currentTrip!!) },
         onDeleteExpense = { expenseAndCategoryViewModel.delete(it) },
@@ -114,6 +116,7 @@ fun ListExpenseScreen(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ListExpenseScreen(
+    currentTrip: Trip?,
     expensesFlow: Flow<PagingData<ExpenseListItemUi>>,
     onSaveExpense: (Expense) -> Unit, onDeleteExpense: (Expense) -> Unit,
     isRecalculatingRate: Boolean,
@@ -137,60 +140,83 @@ fun ListExpenseScreen(
     var itemToDelete by remember { mutableStateOf<Expense?>(null) }
 
     Scaffold(floatingActionButtonPosition = FabPosition.EndOverlay, floatingActionButton = {
-        ExtendedFloatingActionButton(
-            onClick = { showBottomSheet = true },
-            icon = { Icon(Icons.Filled.Add, stringResource(string.add_expense)) },
-            text = { Text(text = stringResource(string.add_expense)) },
-        )
+        if (currentTrip != null && !currentTrip.isDummy()) {
+            ExtendedFloatingActionButton(
+                onClick = { showBottomSheet = true },
+                icon = { Icon(Icons.Filled.Add, stringResource(string.add_expense)) },
+                text = { Text(text = stringResource(string.add_expense)) },
+            )
+        }
     })
     {
         Box {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().semantics {
-                    contentDescription = "expensesList"
-                },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                state = listState
-            ) {
-                items(
-                    count = items.itemCount,
-                    key = items.itemKey { item ->
-                        when (item) {
-                            is ExpenseListItemUi.Item -> item.expenseDto.expense.id
-                            is ExpenseListItemUi.Header -> "header_${item.date}"
-                        }
+            if (items.itemCount == 0) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    val textToShow = if (currentTrip == null || currentTrip.isDummy()) {
+                        stringResource(string.no_trip_picked)
+                    } else {
+                        stringResource(string.no_expenses)
                     }
-                ) { index ->
-
-                    when (val item = items[index]) {
-
-                        is ExpenseListItemUi.Header -> {
-                            CustomDivider(
-                                date = item.date,
-                                sum = item.sum,
-                                currency = item.currency
-                            )
-                        }
-
-                        is ExpenseListItemUi.Item -> {
-                            SwipeToDeleteExpenseCard(
-                                expenseDto = item.expenseDto,
-                                onDelete = { expense -> itemToDelete = expense },
-                                onClick = { expenseDto ->
-                                    expenseDtoToEdit = expenseDto
-                                    showBottomSheet = true
-                                }
-                            )
-                        }
-
-                        null -> {}
-
-                    }
-                    Spacer(Modifier.height(10.dp))
-
+                    Text(
+                        text = textToShow,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Light,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
                 }
 
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .semantics {
+                            contentDescription = "expensesList"
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    state = listState
+                ) {
+                    items(
+                        count = items.itemCount,
+                        key = items.itemKey { item ->
+                            when (item) {
+                                is ExpenseListItemUi.Item -> item.expenseDto.expense.id
+                                is ExpenseListItemUi.Header -> "header_${item.date}"
+                            }
+                        }
+                    ) { index ->
+
+                        when (val item = items[index]) {
+
+                            is ExpenseListItemUi.Header -> {
+                                CustomDivider(
+                                    date = item.date,
+                                    sum = item.sum,
+                                    currency = item.currency
+                                )
+                            }
+
+                            is ExpenseListItemUi.Item -> {
+                                SwipeToDeleteExpenseCard(
+                                    expenseDto = item.expenseDto,
+                                    onDelete = { expense -> itemToDelete = expense },
+                                    onClick = { expenseDto ->
+                                        expenseDtoToEdit = expenseDto
+                                        showBottomSheet = true
+                                    }
+                                )
+                            }
+
+                            null -> {}
+
+                        }
+                        Spacer(Modifier.height(10.dp))
+
+                    }
+
+                }
             }
+
         }
 
         if (itemToDelete != null) {
@@ -466,6 +492,57 @@ fun PreviewListExpenseScreen() {
     TripMoneyTheme() {
         val pagingData = PagingData.from(sampleExpenseDtoWithConvertedAmountList())
         ListExpenseScreen(
+            currentTrip = Trip(
+                id = 1,
+                name = "Vacation",
+                currency = "USD",
+                startDate = LocalDate.parse("2026-01-01"),
+                endDate = LocalDate.parse("2026-01-11"),
+            ),
+            expensesFlow = MutableStateFlow(pagingData),
+            onSaveExpense = {},
+            onDeleteExpense = {},
+            isRecalculatingRate = true,
+            false,
+            {}
+        )
+
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@AllPreviews
+@Composable
+fun PreviewListExpenseScreenWithoutExpenses() {
+    TripMoneyTheme() {
+        val pagingData = PagingData.from(emptyList<ExpenseListItemUi>())
+        ListExpenseScreen(
+            currentTrip = Trip(
+                id = 1,
+                name = "Vacation",
+                currency = "USD",
+                startDate = LocalDate.parse("2026-01-01"),
+                endDate = LocalDate.parse("2026-01-11"),
+            ),
+            expensesFlow = MutableStateFlow(pagingData),
+            onSaveExpense = {},
+            onDeleteExpense = {},
+            isRecalculatingRate = true,
+            false,
+            {}
+        )
+
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@AllPreviews
+@Composable
+fun PreviewListExpenseScreenWithoutTrip() {
+    TripMoneyTheme() {
+        val pagingData = PagingData.from(emptyList<ExpenseListItemUi>())
+        ListExpenseScreen(
+            currentTrip = null,
             expensesFlow = MutableStateFlow(pagingData),
             onSaveExpense = {},
             onDeleteExpense = {},
@@ -480,7 +557,7 @@ fun PreviewListExpenseScreen() {
 @AllPreviews
 @Composable
 fun PreviewDeleteConfirmationDialog() {
-    TripMoneyTheme() {
+    TripMoneyTheme {
         DeleteConfirmationDialog(
             onConfirm = {},
             onCancel = {})

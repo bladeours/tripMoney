@@ -38,14 +38,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.paging.PagingData
@@ -113,31 +112,44 @@ fun TripPickerScreen(
             Icon(Icons.Filled.Add, stringResource(string.add_trip))
         }
     }) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(horizontal = 15.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center
-        ) {
-            items(trips.itemCount, trips.itemKey { it.id }) { i ->
-                Spacer(Modifier.height(10.dp))
-                val trip = trips[i]
-                if (trip != null) {
-                    SwipeToDeleteTripCard(
-                        trip = trip,
-                        onDelete = {
-                            onDelete(trip)
-                        }, onClick = {
-                            onClick(trip)
-                        }, isSelected = currentTripId == trip.id,
-                        onLongClick = { trip ->
-                            tripToEdit = trip
-                            showBottomSheet = true
-                        })
+        if (trips.itemCount == 0) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(string.no_trip_added),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Light,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 15.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                items(trips.itemCount, trips.itemKey { it.id }) { i ->
+                    Spacer(Modifier.height(10.dp))
+                    val trip = trips[i]
+                    if (trip != null) {
+                        SwipeToDeleteTripCard(
+                            trip = trip,
+                            onDelete = {
+                                onDelete(trip)
+                            }, onClick = {
+                                onClick(trip)
+                            }, isSelected = currentTripId == trip.id,
+                            onLongClick = { trip ->
+                                tripToEdit = trip
+                                showBottomSheet = true
+                            })
+                    }
+                    Spacer(Modifier.height(10.dp))
                 }
-                Spacer(Modifier.height(10.dp))
             }
         }
+
 
         if (showBottomSheet) {
             AddTripBottomSheet(
@@ -250,7 +262,8 @@ fun TripCard(
             }
             Column(
                 modifier = Modifier.padding(end = 20.dp),
-                horizontalAlignment = Alignment.End) {
+                horizontalAlignment = Alignment.End
+            ) {
                 Text(
                     trip.currency.uppercase(),
                     style = MaterialTheme.typography.titleLarge,
@@ -301,6 +314,22 @@ fun PreviewTripPickerScreen() {
     TripMoneyTheme {
         TripPickerScreen(
             tripsFlow = MutableStateFlow(PagingData.from(tripsToPreview)),
+            currentTripId = 1,
+            onDelete = {},
+            onClick = {},
+            onSave = {}
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@AllPreviews
+@Composable
+fun PreviewTripPickerScreenNoTrip() {
+
+    TripMoneyTheme {
+        TripPickerScreen(
+            tripsFlow = MutableStateFlow(PagingData.from(emptyList())),
             currentTripId = 1,
             onDelete = {},
             onClick = {},

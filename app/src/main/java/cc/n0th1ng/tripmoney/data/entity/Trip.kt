@@ -19,6 +19,10 @@ data class Trip(
     @ColumnInfo("currency") val currency: String,
     @ColumnInfo("budget") val budget: Double = 0.0
 ) {
+    fun isDummy(): Boolean {
+        return this.id == -1
+    }
+
     companion object {
         @RequiresApi(Build.VERSION_CODES.O)
         val DUMMY = Trip(

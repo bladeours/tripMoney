@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -85,7 +87,9 @@ fun StatisticsScreen(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Summary(
-                Modifier.weight(1f), -1 * summaryAmount, tripCurrency.name,
+                Modifier.weight(1f),
+                if (summaryAmount == 0.0) 0.0 else -1 * summaryAmount,
+                tripCurrency.name,
                 stringResource(cc.n0th1ng.tripmoney.R.string.total_expenses),
                 R.drawable.materialsymbols_ic_payment_arrow_down_outlined,
                 iconColor = MaterialTheme.colorScheme.error
@@ -159,18 +163,30 @@ fun SummaryPerCategoryCard(summaryPerCategoryList: List<SummaryPerCategory>) {
         colors = CardDefaults.elevatedCardColors()
             .copy(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(15.dp)
-                .verticalScroll(rememberScrollState()),
-
-            verticalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            summaryPerCategoryList.forEach {
-                CategoryCard(
-                    summaryPerCategory = it, modifier = Modifier
-                        .fillMaxWidth()
+        if (summaryPerCategoryList.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(cc.n0th1ng.tripmoney.R.string.no_expenses_summary),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Light,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .padding(15.dp)
+                    .verticalScroll(rememberScrollState()),
+
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                summaryPerCategoryList.forEach {
+                    CategoryCard(
+                        summaryPerCategory = it, modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
             }
         }
     }
@@ -238,7 +254,7 @@ fun CategoryCard(modifier: Modifier = Modifier, summaryPerCategory: SummaryPerCa
 @RequiresApi(Build.VERSION_CODES.O)
 @AllPreviews
 @Composable
-fun Preview() {
+fun PreviewStatisticScreen() {
     TripMoneyTheme {
         Scaffold {
             StatisticsScreen(
@@ -250,6 +266,25 @@ fun Preview() {
         }
     }
 }
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@RequiresApi(Build.VERSION_CODES.O)
+@AllPreviews
+@Composable
+fun PreviewStatisticScreenWithNoData() {
+    TripMoneyTheme {
+        Scaffold {
+            StatisticsScreen(
+                emptyList(),
+                summaryAmount = 0.0,
+                Currencies.entries.random(),
+                null
+            )
+        }
+    }
+}
+
+
 
 val categories = listOf(
     Category(name = "Jedzenie", icon = Icons.RESTAURANT, color = colors.random()),

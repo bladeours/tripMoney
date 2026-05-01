@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import cc.n0th1ng.tripmoney.R.*
+import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.screens.AddCategoryDialog
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
@@ -35,7 +35,7 @@ import com.composables.icons.materialsymbols.outlined.R
 fun CategorySelectionDialog(
     onDismiss: () -> Unit,
     onCategorySelected: (Category) -> Unit,
-    selected: Category,
+    selected: Category?,
     categories: List<Category>,
 ) {
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()

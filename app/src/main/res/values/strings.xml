@@ -41,4 +41,8 @@
     <string name="add_expense_settings">Open add expense form on startup</string>
     <string name="yesterday">Yesterday</string>
     <string name="clear">Clear</string>
+    <string name="no_expenses">Start budgeting by adding expenses</string>
+    <string name="no_trip_picked">Select trip to see expenses</string>
+    <string name="no_trip_added">Start budgeting by adding your trip</string>
+    <string name="no_expenses_summary">No expenses to summarize</string>
 </resources>

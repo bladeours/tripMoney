@@ -49,8 +49,6 @@ abstract class TripDatabase : RoomDatabase() {
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
-
     @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
@@ -140,12 +138,12 @@ private class DatabasePrepopulator(
                 currency = "USD"
             )
         )
-        for (category in sampleCategories) {
-            categoryDao.insert(category)
-        }
-        for (expense in sampleExpenses) {
-            expenseDao.insert(expense)
-        }
+//        for (category in sampleCategories) {
+//            categoryDao.insert(category)
+//        }
+//        for (expense in sampleExpenses) {
+//            expenseDao.insert(expense)
+//        }
 
 
     }
