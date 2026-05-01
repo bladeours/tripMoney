@@ -113,7 +113,7 @@ fun TripPickerScreen(
         }
     }) { paddingValues ->
         if (trips.itemCount == 0) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.Center) {
                 Text(
                     text = stringResource(string.no_trip_added),
                     textAlign = TextAlign.Center,

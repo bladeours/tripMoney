@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -63,9 +60,6 @@ import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.colors
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import com.composables.icons.materialsymbols.outlined.R
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import kotlin.collections.emptyList
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -159,7 +153,7 @@ fun ManageCategoriesScreen(
 
     if (itemToDelete != null) {
         DeleteConfirmationDialog(
-            bodyText = stringResource(string.delete_category_info),
+            bodyText = stringResource(string.delete_category_info).format(itemToDelete?.name),
             onConfirm = {
                 onDeleteCategory(itemToDelete!!)
                 itemToDelete = null

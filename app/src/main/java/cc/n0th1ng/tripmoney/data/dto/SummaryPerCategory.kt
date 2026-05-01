@@ -2,7 +2,7 @@ package cc.n0th1ng.tripmoney.data.dto
 
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.utils.Currencies
-import cc.n0th1ng.tripmoney.utils.Icons
+import java.time.LocalDate
 
 data class SummaryPerCategory(
     val category: Category,
@@ -11,12 +11,8 @@ data class SummaryPerCategory(
     val currency: Currencies
 )
 
-data class SummaryPerCategoryRaw(
-    val categoryId: Int,
-    val categoryName: String,
-    val icon: Icons,
-    val color: String,
+data class SummaryPerDay(
+    val day: LocalDate,
     val amount: Double,
-    val currency: String
+    val percent: Float
 )
-

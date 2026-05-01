@@ -151,7 +151,7 @@ fun ListExpenseScreen(
     {
         Box {
             if (items.itemCount == 0) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.Center) {
                     val textToShow = if (currentTrip == null || currentTrip.isDummy()) {
                         stringResource(string.no_trip_picked)
                     } else {

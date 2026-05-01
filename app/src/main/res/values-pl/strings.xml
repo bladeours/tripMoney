@@ -32,4 +32,17 @@
     <string name="export_csv_subttext">Zapisz wydatki  z %s do pliku</string>
     <string name="add_new_category">Dodaj kategorie</string>
     <string name="edit_category">Edytuj kategorie</string>
+    <string name="archive">Archiwizuj</string>
+    <string name="you_want_archive">Chcesz zarchiwizować?</string>
+    <string name="archive_category_info">Żadne wydatki nie będą usunięte.</string>
+    <string name="delete_category_info">Wszystkie wydatki z kategorii %s zostaną usunięte.</string>
+    <string name="budget">Budżet</string>
+    <string name="money_left">Pozostałe środki</string>
+    <string name="add_expense_settings">Pokaż dodawanie wydatku na starcie</string>
+    <string name="yesterday">Wczoraj</string>
+    <string name="clear">Wyczyść</string>
+    <string name="no_expenses">Zacznij budżetowanie od dodania wydatków</string>
+    <string name="no_trip_picked">Wybierz wycieczkę żeby zobaczyć wydatki</string>
+    <string name="no_trip_added">Zacznij budżetowanie od dodania wycieczki</string>
+    <string name="no_expenses_summary">Brak wydatków do podsumowania</string>
 </resources>

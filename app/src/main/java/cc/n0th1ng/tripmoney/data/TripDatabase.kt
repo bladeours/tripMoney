@@ -138,12 +138,12 @@ private class DatabasePrepopulator(
                 currency = "USD"
             )
         )
-//        for (category in sampleCategories) {
-//            categoryDao.insert(category)
-//        }
-//        for (expense in sampleExpenses) {
-//            expenseDao.insert(expense)
-//        }
+        for (category in sampleCategories) {
+            categoryDao.insert(category)
+        }
+        for (expense in sampleExpenses) {
+            expenseDao.insert(expense)
+        }
 
 
     }

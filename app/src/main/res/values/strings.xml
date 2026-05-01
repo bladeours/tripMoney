@@ -35,7 +35,7 @@
     <string name="archive">Archive</string>
     <string name="you_want_archive">Do you want to archive?</string>
     <string name="archive_category_info">No expense will be deleted.</string>
-    <string name="delete_category_info">Your all expenses with category Hotel will be removed.</string>
+    <string name="delete_category_info">Your all expenses with category %s will be removed.</string>
     <string name="budget">Budget</string>
     <string name="money_left">Money left</string>
     <string name="add_expense_settings">Open add expense form on startup</string>

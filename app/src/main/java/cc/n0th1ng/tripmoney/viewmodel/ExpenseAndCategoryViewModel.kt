@@ -10,6 +10,7 @@ import androidx.paging.insertSeparators
 import androidx.paging.map
 import cc.n0th1ng.tripmoney.Filter
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
+import cc.n0th1ng.tripmoney.data.dto.SummaryPerDay
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Expense
 import cc.n0th1ng.tripmoney.data.entity.ExpenseDto
@@ -44,7 +45,11 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         return expenseRepo.getBudgetLeft(tripId)
     }
 
-    fun getExpensesDtoPaged(tripId: Int, search: String = "", filter: Filter = Filter()): Flow<PagingData<ExpenseDto>> =
+    fun getExpensesDtoPaged(
+        tripId: Int,
+        search: String = "",
+        filter: Filter = Filter()
+    ): Flow<PagingData<ExpenseDto>> =
         expenseRepo.getExpensesDtoPaged(tripId, search, filter).cachedIn(viewModelScope)
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -86,7 +91,11 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }.cachedIn(viewModelScope)
     }
 
-    fun getExpensesDto(tripId: Int, search: String = "", filter: Filter = Filter()): Flow<List<ExpenseDto>> =
+    fun getExpensesDto(
+        tripId: Int,
+        search: String = "",
+        filter: Filter = Filter()
+    ): Flow<List<ExpenseDto>> =
         expenseRepo.getExpensesDto(tripId, search, filter)
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -181,6 +190,30 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
                     )
                 }
                 .sortedByDescending { it.percent }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getSummaryPerDay(tripId: Int): Flow<List<SummaryPerDay>> {
+        val tripFlow = tripRepo.getTrip(tripId)
+        val expensesFlow = getExpensesDto(tripId)
+
+        return tripFlow.combine(expensesFlow) { trip, expenses ->
+            val summaryPerDayRaw = expenses.groupBy { it.expense.datetime.toLocalDate() }
+                .map { (day, expensesForDay) ->
+                    val total = expensesForDay.sumOf { it.expense.convertedAmount() }
+                    SummaryPerDay(
+                        amount = total,
+                        day = day,
+                        percent = 0.0f
+                    )
+                }
+                .sortedByDescending { it.day }
+
+            val highestAmount = summaryPerDayRaw.maxOf { it.amount }
+            summaryPerDayRaw.map {
+                it.copy(percent = ((it.amount / highestAmount)).toFloat())
+            }
         }
     }
 
