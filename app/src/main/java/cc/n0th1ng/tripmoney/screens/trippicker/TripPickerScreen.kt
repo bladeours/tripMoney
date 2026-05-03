@@ -326,7 +326,6 @@ fun PreviewTripPickerScreen() {
 @AllPreviews
 @Composable
 fun PreviewTripPickerScreenNoTrip() {
-
     TripMoneyTheme {
         TripPickerScreen(
             tripsFlow = MutableStateFlow(PagingData.from(emptyList())),
