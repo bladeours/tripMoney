@@ -230,7 +230,7 @@ fun SwipeToDeleteExpenseCard(
                 Modifier
                     .clip(CardDefaults.elevatedShape)
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.onError)
+                    .background(MaterialTheme.colorScheme.errorContainer)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
