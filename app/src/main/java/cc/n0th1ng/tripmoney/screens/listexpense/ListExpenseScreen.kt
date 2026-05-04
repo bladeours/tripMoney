@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -99,15 +100,22 @@ fun ListExpenseScreen(
     val expensesFlow =
         expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId, search, filter)
     val isRecalculatingRate by tripViewModel.isRecalculating.collectAsState()
+    var idToScroll by remember { mutableIntStateOf(-1) }
 
     ListExpenseScreen(
         currentTrip = currentTrip,
         expensesFlow = expensesFlow,
-        onSaveExpense = { expenseAndCategoryViewModel.save(it, currentTrip!!) },
+        onSaveExpense = {
+            expenseAndCategoryViewModel.save(
+                it,
+                currentTrip!!,
+                onComplete = { id -> idToScroll = id })
+        },
         onDeleteExpense = { expenseAndCategoryViewModel.delete(it) },
         isRecalculatingRate = isRecalculatingRate,
         initialAutoOpen = initialAutoOpen,
-        onAutoOpenConsumed = onAutoOpenConsumed
+        onAutoOpenConsumed = onAutoOpenConsumed,
+        idToScroll = idToScroll
     )
 }
 
@@ -121,7 +129,8 @@ fun ListExpenseScreen(
     onSaveExpense: (Expense) -> Unit, onDeleteExpense: (Expense) -> Unit,
     isRecalculatingRate: Boolean,
     initialAutoOpen: Boolean,
-    onAutoOpenConsumed: () -> Unit
+    onAutoOpenConsumed: () -> Unit,
+    idToScroll: Int
 ) {
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -151,7 +160,12 @@ fun ListExpenseScreen(
     {
         Box {
             if (items.itemCount == 0) {
-                Box(modifier = Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     val textToShow = if (currentTrip == null || currentTrip.isDummy()) {
                         stringResource(string.no_trip_picked)
                     } else {
@@ -167,85 +181,93 @@ fun ListExpenseScreen(
                 }
 
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .semantics {
-                            contentDescription = "expensesList"
-                        },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    state = listState
-                ) {
-                    items(
-                        count = items.itemCount,
-                        key = items.itemKey { item ->
-                            when (item) {
-                                is ExpenseListItemUi.Item -> item.expenseDto.expense.id
-                                is ExpenseListItemUi.Header -> "header_${item.date}"
-                            }
+                LaunchedEffect(idToScroll) {
+                    if (idToScroll == -1) return@LaunchedEffect
+                    for (index in 0 until items.itemCount) {
+                        val item = items.peek(index)
+                        if (item is ExpenseListItemUi.Item && item.expenseDto.expense.id == idToScroll) {
+                            listState.animateScrollToItem(index)
+                            break
                         }
-                    ) { index ->
-
-                        when (val item = items[index]) {
-
-                            is ExpenseListItemUi.Header -> {
-                                CustomDivider(
-                                    date = item.date,
-                                    sum = item.sum,
-                                    currency = item.currency
-                                )
-                            }
-
-                            is ExpenseListItemUi.Item -> {
-                                SwipeToDeleteExpenseCard(
-                                    expenseDto = item.expenseDto,
-                                    onDelete = { expense -> itemToDelete = expense },
-                                    onClick = { expenseDto ->
-                                        expenseDtoToEdit = expenseDto
-                                        showBottomSheet = true
-                                    }
-                                )
-                            }
-
-                            null -> {}
-
-                        }
-                        Spacer(Modifier.height(10.dp))
-
                     }
-
                 }
             }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .semantics {
+                        contentDescription = "expensesList"
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                state = listState
+            ) {
+                items(
+                    count = items.itemCount,
+                    key = items.itemKey { item ->
+                        when (item) {
+                            is ExpenseListItemUi.Item -> item.expenseDto.expense.id
+                            is ExpenseListItemUi.Header -> "header_${item.date}"
+                        }
+                    }
+                ) { index ->
+                    when (val item = items[index]) {
+                        is ExpenseListItemUi.Header -> {
+                            CustomDivider(
+                                date = item.date,
+                                sum = item.sum,
+                                currency = item.currency
+                            )
+                        }
 
-        }
+                        is ExpenseListItemUi.Item -> {
+                            SwipeToDeleteExpenseCard(
+                                expenseDto = item.expenseDto,
+                                onDelete = { expense -> itemToDelete = expense },
+                                onClick = { expenseDto ->
+                                    expenseDtoToEdit = expenseDto
+                                    showBottomSheet = true
+                                }
+                            )
+                        }
 
-        if (itemToDelete != null) {
-            DeleteConfirmationDialog(
-                onConfirm = {
-                    onDeleteExpense(itemToDelete!!)
-                    itemToDelete = null
-                },
-                onCancel = {
-                    itemToDelete = null
+                        null -> {}
+
+                    }
+                    Spacer(Modifier.height(10.dp))
+
                 }
-            )
+
+            }
         }
 
-        if (showBottomSheet) {
-            AddExpenseBottomSheet(
-                onSave = { expense ->
-                    onSaveExpense(expense)
-                    showBottomSheet = false
-                    expenseDtoToEdit = null
-                },
-                onDismiss = {
-                    expenseDtoToEdit = null
-                    showBottomSheet = false
-                },
-                expenseDtoToEdit = expenseDtoToEdit,
-                state = sheetState
-            )
-        }
+    }
+
+    if (itemToDelete != null) {
+        DeleteConfirmationDialog(
+            onConfirm = {
+                onDeleteExpense(itemToDelete!!)
+                itemToDelete = null
+            },
+            onCancel = {
+                itemToDelete = null
+            }
+        )
+    }
+
+    if (showBottomSheet) {
+        AddExpenseBottomSheet(
+            onSave = { expense ->
+                onSaveExpense(expense)
+                showBottomSheet = false
+                expenseDtoToEdit = null
+            },
+            onDismiss = {
+                expenseDtoToEdit = null
+                showBottomSheet = false
+            },
+            expenseDtoToEdit = expenseDtoToEdit,
+            state = sheetState
+        )
     }
 }
 
@@ -504,7 +526,8 @@ fun PreviewListExpenseScreen() {
             onDeleteExpense = {},
             isRecalculatingRate = true,
             false,
-            {}
+            {},
+            0
         )
 
     }
@@ -529,7 +552,8 @@ fun PreviewListExpenseScreenWithoutExpenses() {
             onDeleteExpense = {},
             isRecalculatingRate = true,
             false,
-            {}
+            {},
+            0
         )
 
     }
@@ -548,7 +572,8 @@ fun PreviewListExpenseScreenWithoutTrip() {
             onDeleteExpense = {},
             isRecalculatingRate = true,
             false,
-            {}
+            {},
+            0
         )
 
     }

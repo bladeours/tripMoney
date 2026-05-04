@@ -25,8 +25,8 @@ class ExpenseRepository @Inject constructor(
     }
 
     @WorkerThread
-    suspend fun save(expense: Expense) {
-        expenseDao.insert(expense)
+    suspend fun save(expense: Expense): Long {
+        return expenseDao.insert(expense)
     }
 
     @WorkerThread

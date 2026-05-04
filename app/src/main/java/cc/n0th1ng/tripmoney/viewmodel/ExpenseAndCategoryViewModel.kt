@@ -99,14 +99,15 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         expenseRepo.getExpensesDto(tripId, search, filter)
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun save(expense: Expense, trip: Trip) {
+    fun save(expense: Expense, trip: Trip, onComplete: (Int) -> Unit) {
         viewModelScope.launch {
             val rate = exchangeRateRepository.getRate(
                 Currencies.valueOf(expense.currency),
                 Currencies.valueOf(trip.currency),
                 expense.datetime.toLocalDate()
             )
-            expenseRepo.save(expense.copy(rate = rate))
+            val id = expenseRepo.save(expense.copy(rate = rate))
+            onComplete(id.toInt())
         }
     }
 
@@ -210,7 +211,9 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
                 }
                 .sortedByDescending { it.day }
 
-            val highestAmount = summaryPerDayRaw.maxOf { it.amount }
+
+            val highestAmount =
+                if (summaryPerDayRaw.isEmpty()) 1.0 else summaryPerDayRaw.maxOf { it.amount }
             summaryPerDayRaw.map {
                 it.copy(percent = ((it.amount / highestAmount)).toFloat())
             }
