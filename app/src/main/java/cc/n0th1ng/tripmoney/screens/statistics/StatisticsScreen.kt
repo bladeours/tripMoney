@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,10 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerCategory
 import cc.n0th1ng.tripmoney.data.dto.SummaryPerDay
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Trip
+import cc.n0th1ng.tripmoney.navigation.Screens
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
@@ -60,7 +63,7 @@ import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun StatisticsScreen() {
+fun StatisticsScreen(navController: NavController) {
     val expenseAndCategoryViewModel: ExpenseAndCategoryViewModel = hiltViewModel()
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
@@ -78,7 +81,10 @@ fun StatisticsScreen() {
         summaryPerDayList,
         summaryAmount,
         Currencies.valueOf(currentTrip?.currency ?: Currencies.default().name),
-        moneyLeft
+        moneyLeft,
+        onDayClicked = {
+            date -> navController.navigate(Screens.LIST_EXPENSE + "?dateToScroll=$date")
+        }
     )
 }
 
@@ -89,7 +95,8 @@ fun StatisticsScreen(
     summaryPerDayList: List<SummaryPerDay>,
     summaryAmount: Double,
     tripCurrency: Currencies,
-    moneyLeft: Double?
+    moneyLeft: Double?,
+    onDayClicked: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -117,7 +124,7 @@ fun StatisticsScreen(
             modifier = Modifier.heightIn(max = 300.dp),
             summaryPerCategoryList = summaryPerCategoryList
         )
-        SummaryPerDayCard(modifier = Modifier.height(300.dp), summaryPerDayList = summaryPerDayList)
+        SummaryPerDayCard(modifier = Modifier.height(300.dp), summaryPerDayList = summaryPerDayList, onDayClicked = onDayClicked)
     }
 }
 
@@ -217,7 +224,7 @@ fun SummaryPerCategoryCard(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SummaryPerDayCard(modifier: Modifier = Modifier, summaryPerDayList: List<SummaryPerDay>) {
+fun SummaryPerDayCard(modifier: Modifier = Modifier, summaryPerDayList: List<SummaryPerDay>, onDayClicked: (String) -> Unit) {
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth(),
@@ -246,9 +253,10 @@ fun SummaryPerDayCard(modifier: Modifier = Modifier, summaryPerDayList: List<Sum
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                summaryPerDayList.forEach {
+                summaryPerDayList.forEach { it ->
                     DayCard(
-                        summaryPerDay = it
+                        summaryPerDay = it,
+                        onDayClicked = {date -> onDayClicked(date)}
                     )
                 }
             }
@@ -316,7 +324,7 @@ fun CategoryCard(modifier: Modifier = Modifier, summaryPerCategory: SummaryPerCa
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DayCard(modifier: Modifier = Modifier, summaryPerDay: SummaryPerDay) {
+fun DayCard(modifier: Modifier = Modifier, summaryPerDay: SummaryPerDay, onDayClicked: (String) -> Unit) {
     Column(
         modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -334,6 +342,7 @@ fun DayCard(modifier: Modifier = Modifier, summaryPerDay: SummaryPerDay) {
                 .fillMaxHeight(0.2f + (0.98f - 0.2f) * summaryPerDay.percent)
                 .clip(RoundedCornerShape(width / 2))
                 .background(MaterialTheme.colorScheme.primary)
+                .clickable(onClick = {onDayClicked(summaryPerDay.day.toString())})
                 .padding(top = 5.dp)
         ) {
             Column(
@@ -362,11 +371,11 @@ fun DayCard(modifier: Modifier = Modifier, summaryPerDay: SummaryPerDay) {
                     Text(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Light,
-                        fontSize =  (MaterialTheme.typography.labelSmall.fontSize.value - 2).sp,
+                        fontSize = (MaterialTheme.typography.labelSmall.fontSize.value - 2).sp,
                         lineHeight = 10.sp,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        text =  summaryPerDay.day.format(DateTimeFormatter.ofPattern("E"))
+                        text = summaryPerDay.day.format(DateTimeFormatter.ofPattern("E"))
                     )
                 }
             }
@@ -387,7 +396,8 @@ fun PreviewStatisticScreen() {
                 summaryPerDayList,
                 summaryAmount = 125.24,
                 Currencies.entries.random(),
-                432.14
+                432.14,
+                {}
             )
         }
     }
@@ -405,7 +415,8 @@ fun PreviewStatisticScreenWithNoData() {
                 emptyList(),
                 summaryAmount = 0.0,
                 Currencies.entries.random(),
-                null
+                null,
+                {}
             )
         }
     }

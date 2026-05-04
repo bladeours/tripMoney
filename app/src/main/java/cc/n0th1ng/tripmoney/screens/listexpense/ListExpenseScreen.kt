@@ -90,7 +90,8 @@ fun ListExpenseScreen(
     filter: Filter,
     search: String,
     initialAutoOpen: Boolean,
-    onAutoOpenConsumed: () -> Unit
+    onAutoOpenConsumed: () -> Unit,
+    dateToScroll: String
 ) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val tripViewModel: TripViewModel = hiltViewModel()
@@ -115,7 +116,8 @@ fun ListExpenseScreen(
         isRecalculatingRate = isRecalculatingRate,
         initialAutoOpen = initialAutoOpen,
         onAutoOpenConsumed = onAutoOpenConsumed,
-        idToScroll = idToScroll
+        idToScroll = idToScroll,
+        dateToScroll = dateToScroll
     )
 }
 
@@ -130,7 +132,8 @@ fun ListExpenseScreen(
     isRecalculatingRate: Boolean,
     initialAutoOpen: Boolean,
     onAutoOpenConsumed: () -> Unit,
-    idToScroll: Int
+    idToScroll: Int,
+    dateToScroll: String
 ) {
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -181,6 +184,16 @@ fun ListExpenseScreen(
                 }
 
             } else {
+                LaunchedEffect(Unit) {
+                    if (dateToScroll == "") return@LaunchedEffect
+                    for (index in 0 until items.itemCount) {
+                        val item = items.peek(index)
+                        if (item is ExpenseListItemUi.Header && item.date.toString() == dateToScroll) {
+                            listState.animateScrollToItem(index)
+                            break
+                        }
+                    }
+                }
                 LaunchedEffect(idToScroll) {
                     if (idToScroll == -1) return@LaunchedEffect
                     for (index in 0 until items.itemCount) {
@@ -527,7 +540,8 @@ fun PreviewListExpenseScreen() {
             isRecalculatingRate = true,
             false,
             {},
-            0
+            0,
+            ""
         )
 
     }
@@ -553,7 +567,8 @@ fun PreviewListExpenseScreenWithoutExpenses() {
             isRecalculatingRate = true,
             false,
             {},
-            0
+            0,
+            ""
         )
 
     }
@@ -573,7 +588,8 @@ fun PreviewListExpenseScreenWithoutTrip() {
             isRecalculatingRate = true,
             false,
             {},
-            0
+            0,
+            ""
         )
 
     }

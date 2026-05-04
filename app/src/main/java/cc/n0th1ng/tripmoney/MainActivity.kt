@@ -12,7 +12,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import cc.n0th1ng.tripmoney.data.entity.Category
 import cc.n0th1ng.tripmoney.data.entity.Trip
 import cc.n0th1ng.tripmoney.navigation.BottomNavigation
@@ -111,17 +111,20 @@ fun NavigationDrawer() {
                 startDestination = if (currentTripId == -1) Screens.TRIP_PICKER else Screens.LIST_EXPENSE,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Screens.LIST_EXPENSE) {
+                composable(Screens.LIST_EXPENSE+"?dateToScroll={dateToScroll}",
+                    arguments = listOf(navArgument("dateToScroll"){defaultValue = ""})) {
+                    backStackEntry ->
                     ListExpenseScreen(
                         filter = filter, search = search,
                         initialAutoOpen = shouldTriggerAutoOpen,
-                        onAutoOpenConsumed = { hasHandledStartupOpen = true })
+                        onAutoOpenConsumed = { hasHandledStartupOpen = true },
+                        dateToScroll = backStackEntry.arguments?.getString("dateToScroll")?: "")
                 }
                 composable(Screens.TRIP_PICKER) {
                     TripPickerScreen(navController)
                 }
                 composable(Screens.STATISTICS) {
-                    StatisticsScreen()
+                    StatisticsScreen(navController)
                 }
                 composable(Screens.SETTINGS) {
                     SettingsScreen(navController)
