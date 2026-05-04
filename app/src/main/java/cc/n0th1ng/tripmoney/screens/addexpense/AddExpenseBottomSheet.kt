@@ -115,10 +115,6 @@ fun AddExpenseBottomSheet(
 ) {
     val currentTripId = currentTrip.id
 
-//    if (categories.isEmpty()) {
-//        return
-//    }
-
     var amount by remember {
         mutableStateOf(
             "%.2f".format(expenseDtoToEdit?.expense?.amount ?: 0.00)
@@ -139,7 +135,7 @@ fun AddExpenseBottomSheet(
         )
     }
     var category by remember {
-        mutableStateOf<Category?>(
+        mutableStateOf(
             expenseDtoToEdit?.category ?: if (categories.isEmpty()) null else categories[0]
         )
     }
@@ -484,12 +480,20 @@ fun NumberKeyboard(
                             modifier = Modifier
                                 .weight(1f),
                             containerColor = Color.Transparent,
-                            onLongClick = onLongBackspaceClick
+                            onLongClick = onLongBackspaceClick,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
 
                         "+", "÷", "−", "×" -> KeyboardButton(
                             text = key,
-                            onClick = { onOperatorClick(key) },
+                            onClick = {
+                                when (key) {
+                                    "+" -> onOperatorClick("+")
+                                    "÷" -> onOperatorClick("/")
+                                    "−" -> onOperatorClick("-")
+                                    "×" -> onOperatorClick("*")
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = MaterialTheme.colorScheme.onTertiaryContainer
@@ -500,7 +504,7 @@ fun NumberKeyboard(
                             onClick = { onNumberClick(key) },
                             modifier = Modifier.weight(1f),
                             containerColor = Color.Transparent,
-                            contentColor = MaterialTheme.colorScheme.onSecondary
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
@@ -532,7 +536,8 @@ fun KeyboardButton(
         when {
             text != null -> Text(
                 text = text,
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                color = contentColor
             )
 
             icon != null -> Icon(painter = icon, contentDescription = null)
