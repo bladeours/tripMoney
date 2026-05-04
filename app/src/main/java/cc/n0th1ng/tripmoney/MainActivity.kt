@@ -97,7 +97,7 @@ fun NavigationDrawer() {
                             }
                         }
                     },
-                    isSearchable = current == Screens.LIST_EXPENSE,
+                    isSearchable = current != null && current.contains(Screens.LIST_EXPENSE),
                     onSearchChange = { newSearch -> search = newSearch },
                     onFilterChange = { newFilter -> filter = newFilter },
                     categories = categories,
