@@ -12,9 +12,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,14 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import cc.n0th1ng.tripmoney.R
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
 import cc.n0th1ng.tripmoney.utils.Currencies
-import com.composables.icons.materialsymbols.outlined.R.drawable
+import cc.n0th1ng.tripmoney.utils.SearchTextOutlined
 
 @Composable
 fun CurrencySelectionDialog(
@@ -57,20 +54,6 @@ fun CurrencySelectionDialog(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                OutlinedTextField(
-                    value = search,
-                    onValueChange = { newText ->
-                        search = newText
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = {
-                        Icon(
-                            painter = painterResource(drawable.materialsymbols_ic_search_outlined),
-                            contentDescription = "search"
-                        )
-                    }
-                )
-
                 val filteredCurrencies = if (search.isBlank()) {
                     currencies
                 } else {
@@ -79,7 +62,12 @@ fun CurrencySelectionDialog(
                     }
                 }
 
-                LazyColumn(state = scrollState) {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 10.dp)
+                ) {
                     items(
                         count = filteredCurrencies.size,
                         key = { index -> filteredCurrencies[index] }
@@ -104,6 +92,8 @@ fun CurrencySelectionDialog(
                         }
                     }
                 }
+                SearchTextOutlined(
+                    text = search, onTextChange = { newText -> search = newText })
             }
         },
         confirmButton = {},

@@ -98,7 +98,8 @@ fun AddExpenseBottomSheet(
         expenseDtoToEdit = expenseDtoToEdit,
         state = state,
         currentTrip = currentTrip ?: Trip.DUMMY,
-        categories = categories
+        categories = categories,
+        onSaveCategory = {expenseAndCategoryViewModel.save(it)}
     )
 }
 
@@ -111,7 +112,8 @@ fun AddExpenseBottomSheet(
     expenseDtoToEdit: ExpenseDto?,
     state: SheetState,
     currentTrip: Trip,
-    categories: List<Category>
+    categories: List<Category>,
+    onSaveCategory: (Category) -> Unit
 ) {
     val currentTripId = currentTrip.id
 
@@ -319,7 +321,8 @@ fun AddExpenseBottomSheet(
                 category = selectedCategory
             },
             selected = category,
-            categories = categories
+            categories = categories,
+            onSaveCategory = onSaveCategory
         )
     }
 }
@@ -578,7 +581,8 @@ fun PreviewAddExpenseDisabled() {
                 LocalDate.parse("2020-01-15"),
                 Currencies.entries.random().name
             ),
-            categories = categoriesToPreview
+            categories = categoriesToPreview,
+            {}
         )
     }
 
@@ -622,7 +626,8 @@ fun PreviewAddExpenseEnabled() {
                 LocalDate.parse("2020-01-11"),
                 Currencies.entries.random().name
             ),
-            categories = categoriesToPreview
+            categories = categoriesToPreview,
+            {}
         )
     }
 
