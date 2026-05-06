@@ -23,7 +23,7 @@ fun SearchTextOutlined(
     OutlinedTextField(
         value = text,
         onValueChange = onTextChange,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .focusRequester(focusRequester),
         trailingIcon = {
