@@ -1,7 +1,5 @@
 package cc.n0th1ng.tripmoney.screens.listexpense
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
@@ -21,8 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import cc.n0th1ng.tripmoney.R.*
+import cc.n0th1ng.tripmoney.R.string
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.utils.AllPreviews
 import java.time.Instant
@@ -31,7 +28,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePicker(
@@ -75,7 +71,6 @@ fun DateRangePicker(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePicker(
@@ -117,7 +112,6 @@ fun DatePicker(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePicker(
@@ -147,7 +141,6 @@ fun TimePicker(
 }
 
 @Composable
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 fun DateTimePicker(
     dateTime: LocalDateTime = LocalDateTime.now(),
@@ -181,15 +174,12 @@ fun DateTimePicker(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun LocalDateTime.toEpochMilli(): Long =
     this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun LocalDate.toEpochMilli(): Long =
-    this.atStartOfDay().atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    this.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-@RequiresApi(Build.VERSION_CODES.O)
 @AllPreviews
 @Composable
 fun DatePickerPreview() {

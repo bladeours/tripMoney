@@ -44,6 +44,7 @@ import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -57,7 +58,6 @@ class MainActivity : ComponentActivity() {
                 NavigationDrawer()
             }
         }
-
     }
 }
 
@@ -111,14 +111,16 @@ fun NavigationDrawer() {
                 startDestination = if (currentTripId == -1) Screens.TRIP_PICKER else Screens.LIST_EXPENSE,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Screens.LIST_EXPENSE+"?dateToScroll={dateToScroll}",
-                    arguments = listOf(navArgument("dateToScroll"){defaultValue = ""})) {
-                    backStackEntry ->
+                composable(
+                    Screens.LIST_EXPENSE + "?dateToScroll={dateToScroll}",
+                    arguments = listOf(navArgument("dateToScroll") { defaultValue = "" })
+                ) { backStackEntry ->
                     ListExpenseScreen(
                         filter = filter, search = search,
                         initialAutoOpen = shouldTriggerAutoOpen,
                         onAutoOpenConsumed = { hasHandledStartupOpen = true },
-                        dateToScroll = backStackEntry.arguments?.getString("dateToScroll")?: "")
+                        dateToScroll = backStackEntry.arguments?.getString("dateToScroll") ?: ""
+                    )
                 }
                 composable(Screens.TRIP_PICKER) {
                     TripPickerScreen(navController)
@@ -139,7 +141,9 @@ fun NavigationDrawer() {
 
 data class Filter(
     val categories: List<Category> = emptyList(), val startAmount: Double = 0.0,
-    val endAmount: Double = Double.MAX_VALUE
+    val endAmount: Double = Double.MAX_VALUE,
+    val startDate: LocalDate = LocalDate.MIN,
+    val endDate: LocalDate = LocalDate.MAX
 ) {
     fun with(category: Category): Filter {
         return this.copy(categories = categories + category)
@@ -153,11 +157,19 @@ data class Filter(
         return this.copy(endAmount = amount)
     }
 
+    fun withStartDate(date: LocalDate): Filter {
+        return this.copy(startDate = date)
+    }
+
+    fun withEndDate(date: LocalDate): Filter {
+        return this.copy(endDate = date)
+    }
+
     fun without(category: Category): Filter {
         return this.copy(categories = categories - category)
     }
 
     fun isDefault(): Boolean {
-        return this.categories.isEmpty() && startAmount == 0.0 && endAmount == Double.MAX_VALUE
+        return this.categories.isEmpty() && startAmount == 0.0 && endAmount == Double.MAX_VALUE && startDate == LocalDate.MIN && endDate == LocalDate.MAX
     }
 }

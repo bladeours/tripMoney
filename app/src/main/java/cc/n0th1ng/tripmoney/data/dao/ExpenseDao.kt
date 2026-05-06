@@ -40,6 +40,12 @@ interface ExpenseDao {
       AND (
             :endAmount IS NULL OR expense.amount <= :endAmount
           )
+      AND (
+            :startDate IS NULL OR expense.datetime >= :startDate
+          )
+      AND (
+            :endDate IS NULL OR expense.datetime <= :endDate
+          )
 
     ORDER BY expense.datetime DESC
         """
@@ -50,7 +56,9 @@ interface ExpenseDao {
         categoryIds: List<Int>,
         categoriesEmpty: Boolean,
         startAmount: Double?,
-        endAmount: Double?
+        endAmount: Double?,
+        startDate: Long?,
+        endDate: Long?
     ): PagingSource<Int, ExpenseDto>
 
     @Transaction
@@ -74,7 +82,12 @@ interface ExpenseDao {
       AND (
             :endAmount IS NULL OR expense.amount <= :endAmount
           )
-
+      AND (
+            :startDate IS NULL OR expense.datetime >= :startDate
+          )
+      AND (
+            :endDate IS NULL OR expense.datetime <= :endDate
+          )
     ORDER BY expense.datetime DESC
 """
     )
@@ -84,7 +97,9 @@ interface ExpenseDao {
         categoryIds: List<Int>,
         categoriesEmpty: Boolean,
         startAmount: Double?,
-        endAmount: Double?
+        endAmount: Double?,
+        startDate: Long?,
+        endDate: Long?
     ): Flow<List<ExpenseDto>>
 
     @Query(

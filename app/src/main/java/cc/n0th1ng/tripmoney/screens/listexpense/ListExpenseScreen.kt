@@ -1,8 +1,6 @@
 package cc.n0th1ng.tripmoney.screens.listexpense
 
 import android.annotation.SuppressLint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -85,7 +83,6 @@ import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ListExpenseScreen(
     filter: Filter,
@@ -124,7 +121,6 @@ fun ListExpenseScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ListExpenseScreen(
     currentTrip: Trip?,
@@ -286,7 +282,6 @@ fun ListExpenseScreen(
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CustomDivider(date: LocalDate, sum: Double, currency: String) {
     Row(
@@ -329,7 +324,6 @@ fun CustomDivider(date: LocalDate, sum: Double, currency: String) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SwipeToDeleteExpenseCard(
     expenseDto: ExpenseDto,
@@ -422,7 +416,6 @@ fun DeleteConfirmationDialog(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ExpenseCard(
     expenseDto: ExpenseDto,
@@ -523,7 +516,6 @@ fun ExpenseCard(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @AllPreviews
 @Composable
 fun PreviewListExpenseScreen() {
@@ -550,7 +542,6 @@ fun PreviewListExpenseScreen() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @AllPreviews
 @Composable
 fun PreviewListExpenseScreenWithoutExpenses() {
@@ -577,7 +568,6 @@ fun PreviewListExpenseScreenWithoutExpenses() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @AllPreviews
 @Composable
 fun PreviewListExpenseScreenWithoutTrip() {
@@ -609,7 +599,6 @@ fun PreviewDeleteConfirmationDialog() {
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 private fun sampleExpenseDtoWithConvertedAmountList(): List<ExpenseListItemUi> {
     val sampleCategories = listOf(
         Category(
