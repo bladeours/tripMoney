@@ -88,7 +88,6 @@ fun StatisticsScreen(navController: NavController) {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun StatisticsScreen(
     summaryPerCategoryList: List<SummaryPerCategory>,
@@ -124,7 +123,7 @@ fun StatisticsScreen(
             modifier = Modifier.heightIn(max = 300.dp),
             summaryPerCategoryList = summaryPerCategoryList
         )
-        SummaryPerDayCard(modifier = Modifier.height(300.dp), summaryPerDayList = summaryPerDayList, onDayClicked = onDayClicked)
+        SummaryPerDayCard(modifier = Modifier.height(300.dp), summaryPerDayList = summaryPerDayList.sortedBy { it.day }, onDayClicked = onDayClicked)
     }
 }
 

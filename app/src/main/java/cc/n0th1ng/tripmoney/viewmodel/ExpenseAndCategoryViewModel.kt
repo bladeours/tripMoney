@@ -98,7 +98,6 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     ): Flow<List<ExpenseDto>> =
         expenseRepo.getExpensesDto(tripId, search, filter)
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun save(expense: Expense, trip: Trip, onComplete: (Int) -> Unit) {
         viewModelScope.launch {
             val rate = exchangeRateRepository.getRate(
@@ -133,7 +132,6 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun generateCSVToFile(tripId: Int, file: File) {
         file.writer().use { writer ->
             CSVPrinter(
@@ -153,7 +151,6 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getDailySums(tripId: Int, search: String, filter: Filter): Flow<Map<LocalDate, Double>> {
         return getExpensesDto(tripId, search, filter)
             .map { expenses ->
@@ -164,14 +161,12 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
             }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getSummaryAmount(tripId: Int): Flow<Double> {
         return getExpensesDto(tripId).map { list ->
             list.sumOf { it.expense.amount * it.expense.rate }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getSummaryPerCategory(tripId: Int): Flow<List<SummaryPerCategory>> {
         val tripFlow = tripRepo.getTrip(tripId)
         val expensesFlow = getExpensesDto(tripId)
@@ -194,7 +189,6 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getSummaryPerDay(tripId: Int): Flow<List<SummaryPerDay>> {
         val tripFlow = tripRepo.getTrip(tripId)
         val expensesFlow = getExpensesDto(tripId)
@@ -220,14 +214,12 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun clearOldRates() {
         viewModelScope.launch {
             exchangeRateRepository.clearOldRates()
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     sealed class ExpenseListItemUi {
         data class Item(val expenseDto: ExpenseDto) : ExpenseListItemUi()
         data class Header(val date: LocalDate, val sum: Double, val currency: String) :
