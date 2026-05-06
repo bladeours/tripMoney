@@ -14,5 +14,10 @@ enum class Icons(@DrawableRes val resource: Int) {
     COFFEE(R.drawable.materialsymbols_ic_local_cafe_outlined),
     GENERAL(R.drawable.materialsymbols_ic_shoppingmode_outlined),
     ENTERTAINMENT(R.drawable.materialsymbols_ic_theaters_outlined),
-    LAUNDRY(R.drawable.materialsymbols_ic_local_laundry_service_outlined)
+    LAUNDRY(R.drawable.materialsymbols_ic_local_laundry_service_outlined),
+    INSURANCE(R.drawable.materialsymbols_ic_health_and_safety_outlined),
+    SIM_DATA(R.drawable.materialsymbols_ic_sim_card_outlined),
+    CAR_RENTAL(R.drawable.materialsymbols_ic_directions_car_outlined),
+    FUEL(R.drawable.materialsymbols_ic_local_gas_station_outlined),
+    TOURS(R.drawable.materialsymbols_ic_tour_outlined)
 }

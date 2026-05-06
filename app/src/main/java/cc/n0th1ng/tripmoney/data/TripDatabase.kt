@@ -153,16 +153,16 @@ private class DatabasePrepopulator(
             name = "Hotel", icon = Icons.HOTEL, color = colors.random()
         ),
         Category(
-            name = "Jedzenie", icon = Icons.RESTAURANT, color = colors.random()
+            name = "Restaurants", icon = Icons.RESTAURANT, color = colors.random()
         ),
         Category(
             name = "Transport", icon = Icons.FLIGHT, color = colors.random()
         ),
         Category(
-            name = "Rozrywka", icon = Icons.ATTRACTION, color = colors.random()
+            name = "Entertainment", icon = Icons.ATTRACTION, color = colors.random()
         ),
         Category(
-            name = "Zakupy", icon = Icons.GROCERIES, color = colors.random()
+            name = "Groceries", icon = Icons.GROCERIES, color = colors.random()
         ),
         Category(
             name = "Zakupy1", icon = Icons.GROCERIES, color = colors.random()
