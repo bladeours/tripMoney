@@ -100,7 +100,6 @@ fun ListExpenseScreen(
         expenseAndCategoryViewModel.getExpensesWithHeadersPaged(currentTripId, search, filter)
     val isRecalculatingRate by tripViewModel.isRecalculating.collectAsState()
     var idToScroll by remember { mutableIntStateOf(-1) }
-
     ListExpenseScreen(
         currentTrip = currentTrip,
         expensesFlow = expensesFlow,

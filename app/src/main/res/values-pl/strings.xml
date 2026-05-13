@@ -45,4 +45,9 @@
     <string name="no_trip_picked">Wybierz wycieczkę żeby zobaczyć wydatki</string>
     <string name="no_trip_added">Zacznij budżetowanie od dodania wycieczki</string>
     <string name="no_expenses_summary">Brak wydatków do podsumowania</string>
+    <string name="import_csv">Import z CSV</string>
+    <string name="import_csv_subtext">Stwórz nową wycieczkę z CSV</string>
+    <string name="import_export">Import/Eksport</string>
+    <string name="went_wrong">Coś poszło nie tak.</string>
+    <string name="import_success">Dane zaimportowane poprawnie!</string>
 </resources>

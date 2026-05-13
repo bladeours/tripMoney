@@ -1,8 +1,6 @@
 package cc.n0th1ng.tripmoney.data
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -49,7 +47,6 @@ abstract class TripDatabase : RoomDatabase() {
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-    @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
     fun provideTripDatabase(
@@ -76,7 +73,6 @@ object DatabaseModule {
                 ).prepopulate()
             }
         }
-
         return db
     }
 
@@ -111,7 +107,6 @@ private class DatabasePrepopulator(
     private val categoryDao: CategoryDao,
     private val expenseDao: ExpenseDao
 ) {
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun prepopulate() {
 
         tripDao.insert(
@@ -193,7 +188,6 @@ private class DatabasePrepopulator(
         ),
     )
 
-    @RequiresApi(Build.VERSION_CODES.O)
     val sampleExpenses = (0..150).map { i ->
 
         val datetime = if (i > 4) {

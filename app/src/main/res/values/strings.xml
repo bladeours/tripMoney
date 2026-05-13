@@ -45,4 +45,9 @@
     <string name="no_trip_picked">Select trip to see expenses</string>
     <string name="no_trip_added">Start budgeting by adding your trip</string>
     <string name="no_expenses_summary">No expenses to summarize</string>
+    <string name="import_csv">import from CSV</string>
+    <string name="import_csv_subtext">Create new trip from CSV</string>
+    <string name="import_export">Import/Export</string>
+    <string name="went_wrong">Sorry, something went wrong.</string>
+    <string name="import_success">Data imported successfully!</string>
 </resources>

@@ -42,6 +42,7 @@ enum class Currencies {
     DZD,
     EGP,
     ERN,
+    EUR,
     ETB,
     FJD,
     FKP,

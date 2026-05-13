@@ -1,7 +1,5 @@
 package cc.n0th1ng.tripmoney.viewmodel
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -19,6 +17,7 @@ import cc.n0th1ng.tripmoney.data.repository.CategoryRepository
 import cc.n0th1ng.tripmoney.data.repository.ExchangeRateRepository
 import cc.n0th1ng.tripmoney.data.repository.ExpenseRepository
 import cc.n0th1ng.tripmoney.data.repository.TripRepository
+import cc.n0th1ng.tripmoney.service.ImportService
 import cc.n0th1ng.tripmoney.utils.Currencies
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -38,7 +37,8 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     private val expenseRepo: ExpenseRepository,
     private val categoryRepo: CategoryRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
-    private val tripRepo: TripRepository
+    private val tripRepo: TripRepository,
+    private val importService: ImportService
 ) : ViewModel() {
 
     fun getBudgetLeft(tripId: Int): Flow<Double?> {
@@ -52,7 +52,6 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
     ): Flow<PagingData<ExpenseDto>> =
         expenseRepo.getExpensesDtoPaged(tripId, search, filter).cachedIn(viewModelScope)
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getExpensesWithHeadersPaged(
         tripId: Int,
         search: String = "",
@@ -136,14 +135,16 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
         file.writer().use { writer ->
             CSVPrinter(
                 writer,
-                CSVFormat.DEFAULT.withHeader("date", "category", "currency", "amount")
+                CSVFormat.DEFAULT.builder()
+                    .setHeader("date", "category", "currency", "amount", "note").get()
             ).use { printer ->
                 expenseRepo.getExpensesDto(tripId).first().forEach { expenseDto ->
                     printer.printRecord(
                         expenseDto.expense.datetime,
                         expenseDto.category.name,
                         expenseDto.expense.currency,
-                        expenseDto.expense.amount
+                        expenseDto.expense.amount,
+                        expenseDto.expense.note
                     )
 
                 }
@@ -211,6 +212,12 @@ open class ExpenseAndCategoryViewModel @Inject constructor(
             summaryPerDayRaw.map {
                 it.copy(percent = ((it.amount / highestAmount)).toFloat())
             }
+        }
+    }
+
+    fun importCSV(csv: String, filename: String, onError: (Exception) -> Unit, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            importService.importCSV(csv, filename, onError, onSuccess)
         }
     }
 

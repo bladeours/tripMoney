@@ -1,8 +1,6 @@
 package cc.n0th1ng.tripmoney.screens.addexpense
 
 import android.annotation.SuppressLint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
@@ -77,7 +75,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddExpenseBottomSheet(
     onSave: (Expense) -> Unit,
@@ -104,7 +101,6 @@ fun AddExpenseBottomSheet(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddExpenseBottomSheet(
     onSave: (Expense) -> Unit,
@@ -558,7 +554,6 @@ val keyboard = listOf(
 
 
 @SuppressLint("CoroutineCreationDuringComposition")
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @AllPreviews
 @Composable
@@ -589,7 +584,6 @@ fun PreviewAddExpenseDisabled() {
 }
 
 @SuppressLint("CoroutineCreationDuringComposition")
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @AllPreviews
 @Composable

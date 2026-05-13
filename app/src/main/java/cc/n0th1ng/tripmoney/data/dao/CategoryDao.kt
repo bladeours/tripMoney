@@ -11,9 +11,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CategoryDao {
     @Upsert
-    suspend fun insert(category: Category)
+    suspend fun insert(category: Category): Long
 
-
+    @Query(
+        """
+        SELECT * FROM category WHERE name = :name LIMIT 1
+    """
+    )
+    fun getByName(name: String): Flow<Category?>
     @Delete
     suspend fun delete(category: Category)
 

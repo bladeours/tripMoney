@@ -10,8 +10,11 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +44,7 @@ import cc.n0th1ng.tripmoney.screens.trippicker.TripPickerScreen
 import cc.n0th1ng.tripmoney.theme.TripMoneyTheme
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import cc.n0th1ng.tripmoney.viewmodel.SnackbarViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -80,9 +84,17 @@ fun NavigationDrawer() {
     val autoOpenPref by settingsViewModel.autoOpenStartupPref.collectAsState()
     var hasHandledStartupOpen by rememberSaveable { mutableStateOf(false) }
     val shouldTriggerAutoOpen = autoOpenPref == true && !hasHandledStartupOpen
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarViewModel: SnackbarViewModel = hiltViewModel()
+    LaunchedEffect(Unit) {
+        snackbarViewModel.snackbarManager.messages.collect { message ->
+            snackbarHostState.showSnackbar(message, withDismissAction = true)
+        }
+    }
     ReportDrawnWhen { !categories.isEmpty() }
     CustomNavigationDrawer(navController, drawerState) {
         Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 if (current == Screens.SETTINGS) TopBarSettings(
                     navController

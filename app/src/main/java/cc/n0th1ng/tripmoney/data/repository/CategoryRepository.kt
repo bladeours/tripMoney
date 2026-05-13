@@ -9,8 +9,12 @@ import javax.inject.Inject
 class CategoryRepository @Inject constructor(private val categoryDao: CategoryDao) {
 
     @WorkerThread
-    suspend fun save(category: Category) {
-        categoryDao.insert(category)
+    suspend fun save(category: Category): Long {
+        return categoryDao.insert(category)
+    }
+
+    fun getByName(name: String): Flow<Category?> {
+        return categoryDao.getByName(name)
     }
 
     @WorkerThread

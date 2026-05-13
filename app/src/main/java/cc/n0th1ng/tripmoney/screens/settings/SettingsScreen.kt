@@ -1,6 +1,11 @@
 package cc.n0th1ng.tripmoney.screens.settings
 
+import android.content.ContentResolver
+import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -48,6 +53,7 @@ import cc.n0th1ng.tripmoney.utils.Currencies
 import cc.n0th1ng.tripmoney.utils.shareCsv
 import cc.n0th1ng.tripmoney.viewmodel.ExpenseAndCategoryViewModel
 import cc.n0th1ng.tripmoney.viewmodel.SettingsViewModel
+import cc.n0th1ng.tripmoney.viewmodel.SnackbarViewModel
 import cc.n0th1ng.tripmoney.viewmodel.TripViewModel
 import com.composables.icons.materialsymbols.outlined.R
 import kotlinx.coroutines.launch
@@ -57,6 +63,7 @@ import java.io.File
 @Composable
 fun SettingsScreen(navController: NavHostController) {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val snackbarViewModel: SnackbarViewModel = hiltViewModel()
     val currentTheme by settingsViewModel.theme.collectAsState()
     val currentAddExpenseSwitch by settingsViewModel.addExpenseSwitch.collectAsState()
     val currentDefaultCurrency by settingsViewModel.defaultCurrency.collectAsState()
@@ -67,7 +74,31 @@ fun SettingsScreen(navController: NavHostController) {
     val context = LocalContext.current
     val tripName = currentTrip?.name ?: ""
     val scope = rememberCoroutineScope()
+    val result = remember { mutableStateOf<Uri?>(null) }
+    val wentWrongMessage = stringResource(string.went_wrong)
+    val successImportMessage = stringResource(string.import_success)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
+        result.value = it
+        if (it != null) {
+            context.contentResolver.openInputStream(it)?.use { inputStream ->
+                inputStream.bufferedReader().use { input ->
+                    val csvText = input.readText()
+                    val filename = context.contentResolver.filename(it)
+                    if (filename != null) {
+                        expenseAndCategoryViewModel.importCSV(
+                            csvText, filename,
+                            onError = { ex ->
+                                snackbarViewModel.showMessage(wentWrongMessage)
+                            },
+                        onSuccess = {
+                            snackbarViewModel.showMessage(successImportMessage)
+                        })
+                    }
+                }
+            }
+        }
 
+    }
     SettingsScreen(
         currentDefaultCurrency = currentDefaultCurrency,
         currentTheme = currentTheme,
@@ -90,9 +121,27 @@ fun SettingsScreen(navController: NavHostController) {
                 }
             }
         },
+        onImportCsv = {
+            launcher.launch(arrayOf("*/*"))
+        },
         onCategoriesClick = { navController.navigate(Screens.MANAGE_CATEGORIES) },
         currentAddExpenseSwitch = currentAddExpenseSwitch
     )
+}
+
+private fun ContentResolver.filename(uri: Uri): String? {
+    val projection = arrayOf<String?>(MediaStore.MediaColumns.DISPLAY_NAME)
+    val metaCursor = this.query(uri, projection, null, null, null);
+    if (metaCursor != null) {
+        try {
+            if (metaCursor.moveToFirst()) {
+                return metaCursor.getString(0)
+            }
+        } finally {
+            metaCursor.close();
+        }
+    }
+    return null
 }
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -106,7 +155,8 @@ fun SettingsScreen(
     onExportToCsv: () -> Unit,
     onCategoriesClick: () -> Unit,
     onAddExpenseSwitch: (Boolean) -> Unit,
-    currentAddExpenseSwitch: Boolean
+    currentAddExpenseSwitch: Boolean,
+    onImportCsv: () -> Unit
 ) {
 
     Scaffold { padding ->
@@ -143,12 +193,20 @@ fun SettingsScreen(
                     iconResource = R.drawable.materialsymbols_ic_palette_outlined
                 )
             }
-            SettingsListItem(
-                onClick = onExportToCsv,
-                stringResource(string.export_to_csv),
-                supportingText = stringResource(string.export_csv_subttext).format(tripName),
-                iconResource = R.drawable.materialsymbols_ic_csv_outlined
-            )
+            SettingsCard(string.import_export) {
+                SettingsListItem(
+                    onClick = onExportToCsv,
+                    stringResource(string.export_to_csv),
+                    supportingText = stringResource(string.export_csv_subttext).format(tripName),
+                    iconResource = R.drawable.materialsymbols_ic_csv_outlined
+                )
+                SettingsListItem(
+                    onClick = onImportCsv,
+                    stringResource(string.import_csv),
+                    supportingText = stringResource(string.import_csv_subtext),
+                    iconResource = R.drawable.materialsymbols_ic_csv_outlined
+                )
+            }
             SettingsListItem(
                 onClick = onCategoriesClick,
                 stringResource(string.categories),
@@ -161,7 +219,9 @@ fun SettingsScreen(
                 supportingText = stringResource(string.add_expense_settings),
                 iconResource = R.drawable.materialsymbols_ic_payments_outlined,
                 trailingContent = {
-                    Switch(checked = currentAddExpenseSwitch, onCheckedChange = {onAddExpenseSwitch(it)})
+                    Switch(
+                        checked = currentAddExpenseSwitch,
+                        onCheckedChange = { onAddExpenseSwitch(it) })
                 }
             )
 
@@ -287,10 +347,12 @@ fun PreviewSettingsScreen() {
             tripName = "Włochy",
             onCategoriesClick = {},
             onAddExpenseSwitch = {},
-            currentAddExpenseSwitch = false
-            )
+            currentAddExpenseSwitch = false,
+            onImportCsv = {}
+        )
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.S)
 @AllPreviews
